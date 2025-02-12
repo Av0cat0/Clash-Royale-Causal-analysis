@@ -3,3 +3,5 @@
 /venv
 /*.pyc
 /proposal.pdf
+/requirments.txt
+/data/*

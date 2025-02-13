@@ -3,4 +3,4 @@
 /venv
 /*.pyc
 /proposal.pdf
-/data/
+/data/*

@@ -147,5 +147,8 @@ def feature_engineering(battles_df, card_list_df, winning_card_list_df):
     battles_df["winner_rank"] = _assign_rank(battles_df["winner_count"])
     battles_df["loser_rank"] = _assign_rank(battles_df["loser_count"])
     battles_df["total_rank"] = _assign_rank(battles_df["total_games"])
+    # Create ordered list features for winner and loser cards
+    battles_df["winner_card_set"] = battles_df.apply(lambda row: tuple(sorted([row[f"winner.card{i}.id"] for i in range(1, 9)])), axis=1)
+    battles_df["loser_card_set"] = battles_df.apply(lambda row: tuple(sorted([row[f"loser.card{i}.id"] for i in range(1, 9)])), axis=1)
     return battles_df
 

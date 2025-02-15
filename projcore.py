@@ -2,6 +2,7 @@ import os
 import kaggle
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
 def download_kaggle_main_db(zip = False, tables_amount = 0, force = False):
     tables = [
@@ -64,14 +65,44 @@ def download_kaggle_datasets(zip = False, main_db_tables = 0):
     download_kaggle_main_db(zip, main_db_tables)
     download_kaggle_secondary_db(zip)
 
-def _count_winning_cards(row, prefix, winning_card_set):
-    return sum(row[f"{prefix}.card{i}.id"] in winning_card_set for i in range(1, 9))
+def feature_preprocessing(battles_df, winning_card_list_df):
+    ############################
+    # Notice that some features shouldn't be normalized, such as kingTowerHitPoints,
+    # as they are calculated differently according to the trophy level
+    ############################
+    
+    # Normalize features
+    scaler = MinMaxScaler()
+    features_to_normalize = ['average.startingTrophies', 'loser.startingTrophies', 'winner.startingTrophies',
+                             'loser.trophyChange', 'winner.trophyChange']
+    battles_df[features_to_normalize] = scaler.fit_transform(battles_df[features_to_normalize])
 
-# Compute rank-based scaling for winner_count, loser_count, and total_count
-def _assign_rank(series):
-    return pd.qcut(series.rank(method="min"), q=4, labels=[0, 1, 2, 3])
+    # One-hot encode categorical variables
+    features_to_onehot = ['arena.id', 'gameMode.id']
+    for feature in features_to_onehot:
+        battles_df[feature] = pd.get_dummies(battles_df[feature]).idxmax(axis=1).astype('category').cat.codes
 
-def feature_engineering(battles_df, card_list_df, winning_card_list_df):
+    # Feature engineering
+    battles_df = _feature_engineering(battles_df, winning_card_list_df)
+
+    # features to remove
+    levels_and_ids = [f'loser.card{i}.id' for i in range(1, 9)] + [f'loser.card{i}.level' for i in range(1, 9)] + \
+                        [f'winner.card{i}.id' for i in range(1, 9)] + [f'winner.card{i}.level' for i in range(1, 9)]
+    features_to_remove = ['tournamentTag'] + levels_and_ids
+    battles_df.drop(columns=features_to_remove, inplace=True)
+
+    return battles_df
+
+def compute_deck_strength(battles_df, card_win_rates):
+    deck_strength = np.zeros(len(battles_df))
+    for i in range(1, 9):
+        card_ids = battles_df[f'winner.card{i}.id']
+        card_levels = battles_df[f'winner.card{i}.level']
+        win_rates = card_ids.map(card_win_rates).fillna(0.5)  # Default win rate 50% if not seen
+        deck_strength += win_rates * card_levels
+    return deck_strength
+
+def _feature_engineering(battles_df, winning_card_list_df):
     battles_df['battleTime'] = pd.to_datetime(battles_df['battleTime'])
     numeric_cols = [
         'winner.princessTowersHitPoints',
@@ -84,15 +115,7 @@ def feature_engineering(battles_df, card_list_df, winning_card_list_df):
         'loser.elixir.average'
     ]
     
-    for col in numeric_cols:
-        battles_df[col] = (
-            battles_df[col].astype(str)
-            .str.replace(',', '.', regex=False)  # Handle European decimal formats
-            .str.replace('[^0-9.]', '', regex=True)  # Remove non-numeric characters
-            .replace('', np.nan)  # Convert empty strings to NaN
-        )
-        battles_df[col] = pd.to_numeric(battles_df[col], errors='coerce')
-    
+    battles_df[numeric_cols] = battles_df[numeric_cols].apply(pd.to_numeric, errors='coerce')
     battles_df['deck_elixir_variability'] = battles_df[['winner.elixir.average', 'loser.elixir.average']].std(axis=1)
     battles_df['winner_trophy_eff'] = battles_df['winner.trophyChange'] / battles_df['winner.startingTrophies']
     battles_df['loser_trophy_eff'] = battles_df['loser.trophyChange'].abs() / battles_df['loser.startingTrophies']
@@ -117,11 +140,11 @@ def feature_engineering(battles_df, card_list_df, winning_card_list_df):
     arena_mean = battles_df.groupby('arena.id')['winner.totalcard.level'].transform('mean')
     battles_df['underleveled_winner'] = (battles_df['winner.totalcard.level'] < arena_mean).astype(int)
     arena_mean_loser = battles_df.groupby('arena.id')['loser.totalcard.level'].transform('mean')
+    battles_df = battles_df.round(5)
     battles_df['underleveled_loser'] = (battles_df['loser.totalcard.level'] < arena_mean_loser).astype(int)
     battles_df['crown_dominance'] = battles_df['winner.crowns'].ge(2).astype(int)
-    battles_df['tournament_participant'] = battles_df['tournamentTag'].notna().astype(int)
+    battles_df = battles_df.round(5)
     battles_df.replace([np.inf, -np.inf], np.nan, inplace=True)
-
     for col in battles_df.columns:
         if battles_df[col].dtype == 'object':
             column_replaced = []
@@ -140,15 +163,60 @@ def feature_engineering(battles_df, card_list_df, winning_card_list_df):
     battles_df["winner_count"] = battles_df["winner.tag"].map(winner_counts)
     battles_df["loser_count"] = battles_df["loser.tag"].map(loser_counts)
     battles_df["total_games"] = battles_df["winner_count"] + battles_df["loser_count"]
+    battles_df = battles_df.round(5)
     battles_df["win_lose_ratio"] = battles_df.apply(lambda row: 1.0 if row["loser_count"] == 0 else row["winner_count"] / row["loser_count"], axis=1)
     winning_card_set = set(winning_card_list_df["card_id"])
     battles_df["winner_winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "winner", winning_card_set), axis=1)
     battles_df["loser_winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "loser", winning_card_set), axis=1)
-    battles_df["winner_rank"] = _assign_rank(battles_df["winner_count"])
-    battles_df["loser_rank"] = _assign_rank(battles_df["loser_count"])
-    battles_df["total_rank"] = _assign_rank(battles_df["total_games"])
     # Create ordered list features for winner and loser cards
     battles_df["winner_card_set"] = battles_df.apply(lambda row: tuple(sorted([row[f"winner.card{i}.id"] for i in range(1, 9)])), axis=1)
     battles_df["loser_card_set"] = battles_df.apply(lambda row: tuple(sorted([row[f"loser.card{i}.id"] for i in range(1, 9)])), axis=1)
+    # integrate the winner deck card levels into a few informative score features
+    battles_df['avg_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].mean(axis=1)
+    battles_df['max_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].max(axis=1)
+    battles_df['min_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].min(axis=1)
+    battles_df['level_variance'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].var(axis=1)
+    battles_df = battles_df.round(5)
+    winner_card_id_cols = [f'winner.card{i}.id' for i in range(1, 9)]
+    loser_card_id_cols = [f'loser.card{i}.id' for i in range(1, 9)]
+    winner_card_level_cols = [f'winner.card{i}.level' for i in range(1, 9)]
+    loser_card_level_cols = [f'loser.card{i}.level' for i in range(1, 9)]
+    card_stats = {}
+    for i in range(1, 9):
+        winner_pairs = list(zip(battles_df[winner_card_id_cols[i-1]], battles_df[winner_card_level_cols[i-1]]))
+        loser_pairs = list(zip(battles_df[loser_card_id_cols[i-1]], battles_df[loser_card_level_cols[i-1]]))
+        for pair in winner_pairs:
+            if pair not in card_stats:
+                card_stats[pair] = {'wins': 0, 'appearances': 0}
+            card_stats[pair]['wins'] += 1  
+            card_stats[pair]['appearances'] += 1  
+        for pair in loser_pairs:
+            if pair not in card_stats:
+                card_stats[pair] = {'wins': 0, 'appearances': 0}
+            card_stats[pair]['appearances'] += 1  
+    card_win_rates = {pair: stats['wins'] / stats['appearances'] for pair, stats in card_stats.items()}
+    battles_df = battles_df.round(5)
+    battles_df['deck_weighted_strength'] = compute_deck_strength(battles_df, card_win_rates)
+    features_to_normalize = [
+    "deck_weighted_strength",
+    "avg_card_level",
+    "max_card_level",
+    "min_card_level",
+    "level_variance"
+    ]
+    scaler = MinMaxScaler()
+    battles_df[features_to_normalize] = scaler.fit_transform(battles_df[features_to_normalize])
+    battles_df['winner_deck_final_score'] = (
+    0.4 * battles_df['deck_weighted_strength'] +
+    0.2 * battles_df['avg_card_level'] +
+    0.15 * battles_df['max_card_level'] +
+    0.15 * battles_df['min_card_level'] +
+    0.1 * (1-battles_df['level_variance'])
+    )
+    battles_df = battles_df.round(5)
+    features_to_normalize.remove("deck_weighted_strength")
+    battles_df.drop(columns=features_to_normalize, inplace=True)
     return battles_df
 
+def _count_winning_cards(row, prefix, winning_card_set):
+    return sum(row[f"{prefix}.card{i}.id"] in winning_card_set for i in range(1, 9))

@@ -140,10 +140,8 @@ def _feature_engineering(battles_df, winning_card_list_df):
     arena_mean = battles_df.groupby('arena.id')['winner.totalcard.level'].transform('mean')
     battles_df['underleveled_winner'] = (battles_df['winner.totalcard.level'] < arena_mean).astype(int)
     arena_mean_loser = battles_df.groupby('arena.id')['loser.totalcard.level'].transform('mean')
-    battles_df = battles_df.round(5)
     battles_df['underleveled_loser'] = (battles_df['loser.totalcard.level'] < arena_mean_loser).astype(int)
     battles_df['crown_dominance'] = battles_df['winner.crowns'].ge(2).astype(int)
-    battles_df = battles_df.round(5)
     battles_df.replace([np.inf, -np.inf], np.nan, inplace=True)
     for col in battles_df.columns:
         if battles_df[col].dtype == 'object':
@@ -163,7 +161,6 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df["winner_count"] = battles_df["winner.tag"].map(winner_counts)
     battles_df["loser_count"] = battles_df["loser.tag"].map(loser_counts)
     battles_df["total_games"] = battles_df["winner_count"] + battles_df["loser_count"]
-    battles_df = battles_df.round(5)
     battles_df["win_lose_ratio"] = battles_df.apply(lambda row: 1.0 if row["loser_count"] == 0 else row["winner_count"] / row["loser_count"], axis=1)
     winning_card_set = set(winning_card_list_df["card_id"])
     battles_df["winner_winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "winner", winning_card_set), axis=1)
@@ -176,7 +173,6 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df['max_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].max(axis=1)
     battles_df['min_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].min(axis=1)
     battles_df['level_variance'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].var(axis=1)
-    battles_df = battles_df.round(5)
     winner_card_id_cols = [f'winner.card{i}.id' for i in range(1, 9)]
     loser_card_id_cols = [f'loser.card{i}.id' for i in range(1, 9)]
     winner_card_level_cols = [f'winner.card{i}.level' for i in range(1, 9)]
@@ -195,28 +191,38 @@ def _feature_engineering(battles_df, winning_card_list_df):
                 card_stats[pair] = {'wins': 0, 'appearances': 0}
             card_stats[pair]['appearances'] += 1  
     card_win_rates = {pair: stats['wins'] / stats['appearances'] for pair, stats in card_stats.items()}
-    battles_df = battles_df.round(5)
+    battles_df = battles_df.round(6)
     battles_df['deck_weighted_strength'] = compute_deck_strength(battles_df, card_win_rates)
     features_to_normalize = [
     "deck_weighted_strength",
     "avg_card_level",
     "max_card_level",
     "min_card_level",
-    "level_variance"
+    "level_variance",
+    "winner.elixir.average"
+    "synergy_score"
     ]
     scaler = MinMaxScaler()
     battles_df[features_to_normalize] = scaler.fit_transform(battles_df[features_to_normalize])
-    battles_df['winner_deck_final_score'] = (
-    0.4 * battles_df['deck_weighted_strength'] +
-    0.2 * battles_df['avg_card_level'] +
-    0.15 * battles_df['max_card_level'] +
-    0.15 * battles_df['min_card_level'] +
-    0.1 * (1-battles_df['level_variance'])
+    battles_df["synergy_score"] = battles_df.apply(_compute_synergy_score, axis=1)
+    battles_df["winner_deck_final_score"] = (
+        0.35 * battles_df["deck_weighted_strength"] +
+        0.20 * battles_df["avg_card_level"] +
+        0.15 * (battles_df["max_card_level"] + battles_df["min_card_level"]) / 2 +
+        0.10 * (1 - battles_df["level_variance"]) +
+        0.10 * np.log1p(battles_df["winner.elixir.average"]) +  # log1p(x) = log(1 + x) for stability
+        0.10 * battles_df["synergy_score"]
     )
-    battles_df = battles_df.round(5)
-    features_to_normalize.remove("deck_weighted_strength")
-    battles_df.drop(columns=features_to_normalize, inplace=True)
+    battles_df = battles_df.round(6)
+    #features_to_normalize.remove("deck_weighted_strength")
+    #battles_df.drop(columns=features_to_normalize, inplace=True)
     return battles_df
 
 def _count_winning_cards(row, prefix, winning_card_set):
     return sum(row[f"{prefix}.card{i}.id"] in winning_card_set for i in range(1, 9))
+
+def _compute_synergy_score(row):
+    """Calculates synergy based on rarity diversity and spell/troop balance."""
+    rarity_diversity = row["winner_rarity_diversity"]
+    spell_troop_balance = abs(row["winner_spell_troop_ratio"] - 1)  # Ideal balance is close to 1
+    return rarity_diversity * (1 - spell_troop_balance)

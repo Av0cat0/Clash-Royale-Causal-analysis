@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.impute import KNNImputer
+import ast
 
 def download_kaggle_main_db(zip = False, tables_amount = 0, force = False):
     tables = [
@@ -77,16 +78,20 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     features_to_normalize = ['average.startingTrophies', 'loser.startingTrophies', 'winner.startingTrophies',
                              'loser.trophyChange', 'winner.trophyChange']
     battles_df[features_to_normalize] = scaler.fit_transform(battles_df[features_to_normalize])
+    features_to_normalize.remove('average.startingTrophies')
+    battles_df[features_to_normalize] = battles_df[features_to_normalize] + 1
 
     # One-hot encode categorical variables
     features_to_onehot = ['arena.id', 'gameMode.id']
     for feature in features_to_onehot:
         battles_df[feature] = pd.get_dummies(battles_df[feature]).idxmax(axis=1).astype('category').cat.codes
 
-    # Imputation
-    # for feature in battles_df.columns:
-    #    if feature == 'winner.tag':
-    #        _handle_missing_values(battles_df, feature, strategy='auto')
+    #Imputation
+    for feature in battles_df.columns:
+        if feature in ['winner.clan.badgeId','loser.clan.badgeId', 'winner.clan.tag', 'loser.clan.tag', 'loser.kingTowerHitPoints']:
+           _handle_missing_values(battles_df, feature, strategy='fill')
+        elif 'princessTowersHitPoints' in feature:
+            _handle_missing_values(battles_df, feature, strategy='fill', value="[0]")
 
     # Feature engineering
     battles_df = _feature_engineering(battles_df, winning_card_list_df)
@@ -136,6 +141,8 @@ def _feature_engineering(battles_df, winning_card_list_df):
     rarities = ['common', 'rare', 'epic', 'legendary']
     battles_df['winner_rarity_diversity'] = battles_df[[f'winner.{r}.count' for r in rarities]].gt(0).sum(axis=1)
     battles_df['loser_rarity_diversity'] = battles_df[[f'loser.{r}.count' for r in rarities]].gt(0).sum(axis=1)
+    battles_df['winner.princessTowersHitPoints'] = battles_df['winner.princessTowersHitPoints'].apply(lambda x: sum(ast.literal_eval(x)) if pd.notna(x) and x != '' and x !='[]' else 0)
+    battles_df['loser.princessTowersHitPoints'] = battles_df['loser.princessTowersHitPoints'].apply(lambda x: sum(ast.literal_eval(x)) if pd.notna(x) and x != '' and x !='[]' else 0)
     battles_df['princess_tower_gap'] = battles_df['winner.princessTowersHitPoints'] - battles_df['loser.princessTowersHitPoints']
     battles_df['win_streak_proxy'] = battles_df['winner.trophyChange'] / 50
     battles_df['winner_has_legendary'] = battles_df['winner.legendary.count'].gt(0).astype(int)
@@ -237,7 +244,7 @@ def _compute_synergy_score(row):
     else:
         return rarity_diversity * row["winner_spell_troop_ratio"]
 
-def _handle_missing_values(df, column, strategy='auto', n_neighbors=5):
+def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=-1):
     """
     Handle missing values based on each column's characteristics.
     """
@@ -258,6 +265,8 @@ def _handle_missing_values(df, column, strategy='auto', n_neighbors=5):
     elif strategy == 'knn':
         imputer = KNNImputer(n_neighbors=n_neighbors)
         df[column] = imputer.fit_transform(df[[column]]).flatten()
+    elif strategy == 'fill':
+        df[column] = df[column].fillna(value)
     elif strategy == 'drop':
         df = df.dropna(subset=[column])
     elif strategy == 'fill_zero':

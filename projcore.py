@@ -203,8 +203,8 @@ def _feature_engineering(battles_df, winning_card_list_df):
     "synergy_score"
     ]
     scaler = MinMaxScaler()
-    battles_df[features_to_normalize] = scaler.fit_transform(battles_df[features_to_normalize])
     battles_df["synergy_score"] = battles_df.apply(_compute_synergy_score, axis=1)
+    battles_df[features_to_normalize] = scaler.fit_transform(battles_df[features_to_normalize])
     battles_df["winner_deck_final_score"] = (
         0.35 * battles_df["deck_weighted_strength"] +
         0.20 * battles_df["avg_card_level"] +

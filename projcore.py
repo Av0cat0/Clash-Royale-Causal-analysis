@@ -91,6 +91,9 @@ def feature_preprocessing(battles_df, winning_card_list_df):
                         [f'winner.card{i}.id' for i in range(1, 9)] + [f'winner.card{i}.level' for i in range(1, 9)]
     features_to_remove = ['tournamentTag'] + levels_and_ids
     battles_df.drop(columns=features_to_remove, inplace=True)
+    #for feature in battles_df.columns:
+    #    if feature == 'winner.tag':
+    #        _handle_missing_values(battles_df, feature, strategy='auto')
 
     return battles_df
 
@@ -143,20 +146,12 @@ def _feature_engineering(battles_df, winning_card_list_df):
     arena_mean_loser = battles_df.groupby('arena.id')['loser.totalcard.level'].transform('mean')
     battles_df['underleveled_loser'] = (battles_df['loser.totalcard.level'] < arena_mean_loser).astype(int)
     battles_df['crown_dominance'] = battles_df['winner.crowns'].ge(2).astype(int)
-    battles_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    # factorized_mappings will save mappings of string columns into indexes in case we need to reverse the factorization
+    factorized_mappings = {}
     for col in battles_df.columns:
-        if battles_df[col].dtype == 'object':
-            column_replaced = []
-            for s in battles_df[col]:
-                if pd.isna(s) or s == '' or not any(char.isdigit() for char in str(s)):
-                    column_replaced.append(np.nan)
-                else:
-                    numeric_str = ""
-                    for char in str(s):
-                        if char.isdigit() or char == '.':
-                            numeric_str += str(ord(char))
-                    column_replaced.append(float(numeric_str))
-            battles_df[col] = pd.Series(column_replaced)
+        if battles_df[col].dtype == 'object':  
+            battles_df[col], unique_values = pd.factorize(battles_df[col])  
+            factorized_mappings[col] = unique_values 
     winner_counts = battles_df["winner.tag"].value_counts()
     loser_counts = battles_df["loser.tag"].value_counts()
     battles_df["winner_count"] = battles_df["winner.tag"].map(winner_counts)
@@ -228,24 +223,27 @@ def _compute_synergy_score(row):
     spell_troop_balance = abs(row["winner_spell_troop_ratio"] - 1)  # Ideal balance is close to 1
     return rarity_diversity * (1 - spell_troop_balance)
 
-def handle_missing_values(df, column, strategy='auto', n_neighbors=5):
+def _handle_missing_values(df, column, strategy='auto', n_neighbors=5):
     """
     Handle missing values based on each column's characteristics.
     """
+    if column not in df.columns:
+        raise ValueError(f"Column '{column}' not found in DataFrame")
+    if df[column].isnull().sum() == 0:
+        return df  
     if strategy == 'auto':
-        if df[column].isnull().sum() > 0:
-            if df[column].dtype in [np.float64, np.int64]:
-                # For numerical columns, use median if skewed, otherwise use mean
-                if df[column].skew() > 1 or df[column].skew() < -1:
-                    df[column] = df[column].fillna(df[column].median())
-                else:
-                    df[column] = df[column].fillna(df[column].mean())
+        if pd.api.types.is_numeric_dtype(df[column]):
+            # Use median if skewed, otherwise use mean
+            if abs(df[column].skew()) > 1:
+                df[column].fillna(df[column].median(), inplace=True)
             else:
-                # For categorical columns, use mode
-                df[column] = df[column].fillna(df[column].mode()[0])
+                df[column].fillna(df[column].mean(), inplace=True)
+        else:
+            # Use mode for categorical columns
+            df[column].fillna(df[column].mode()[0], inplace=True)
     elif strategy == 'knn':
-        imputer = KNNImputer(n_neighbors)
-        df[column] = imputer.fit_transform(df[column].values.reshape(-1, 1))
+        imputer = KNNImputer(n_neighbors=n_neighbors)
+        df[column] = imputer.fit_transform(df[[column]]).flatten()
     elif strategy == 'drop':
         df = df.dropna(subset=[column])
     elif strategy == 'fill_zero':

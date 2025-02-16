@@ -199,7 +199,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
     "max_card_level",
     "min_card_level",
     "level_variance",
-    "winner.elixir.average"
+    "winner.elixir.average",
     "synergy_score"
     ]
     scaler = MinMaxScaler()

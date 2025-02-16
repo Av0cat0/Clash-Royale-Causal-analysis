@@ -83,6 +83,11 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     for feature in features_to_onehot:
         battles_df[feature] = pd.get_dummies(battles_df[feature]).idxmax(axis=1).astype('category').cat.codes
 
+    # Imputation
+    # for feature in battles_df.columns:
+    #    if feature == 'winner.tag':
+    #        _handle_missing_values(battles_df, feature, strategy='auto')
+
     # Feature engineering
     battles_df = _feature_engineering(battles_df, winning_card_list_df)
 
@@ -91,9 +96,7 @@ def feature_preprocessing(battles_df, winning_card_list_df):
                         [f'winner.card{i}.id' for i in range(1, 9)] + [f'winner.card{i}.level' for i in range(1, 9)]
     features_to_remove = ['tournamentTag'] + levels_and_ids
     battles_df.drop(columns=features_to_remove, inplace=True)
-    #for feature in battles_df.columns:
-    #    if feature == 'winner.tag':
-    #        _handle_missing_values(battles_df, feature, strategy='auto')
+
 
     return battles_df
 
@@ -127,8 +130,8 @@ def _feature_engineering(battles_df, winning_card_list_df):
     loser_card_levels = [f'loser.card{i}.level' for i in range(1,9)]
     battles_df['winner_card_level_std'] = battles_df[winner_card_levels].std(axis=1)
     battles_df['loser_card_level_std'] = battles_df[loser_card_levels].std(axis=1)
-    battles_df['winner_spell_troop_ratio'] = battles_df['winner.spell.count'] / battles_df['winner.troop.count']
-    battles_df['loser_spell_troop_ratio'] = battles_df['loser.spell.count'] / battles_df['loser.troop.count']
+    battles_df['winner_spell_troop_ratio'] = (battles_df['winner.spell.count'] + 1) / (battles_df['winner.troop.count'] + 1)
+    battles_df['loser_spell_troop_ratio'] = (battles_df['loser.spell.count'] + 1) / (battles_df['loser.troop.count'] + 1)
     battles_df['elixir_gap'] = battles_df['winner.elixir.average'] - battles_df['loser.elixir.average']
     rarities = ['common', 'rare', 'epic', 'legendary']
     battles_df['winner_rarity_diversity'] = battles_df[[f'winner.{r}.count' for r in rarities]].gt(0).sum(axis=1)

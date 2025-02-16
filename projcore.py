@@ -3,6 +3,7 @@ import kaggle
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.impute import KNNImputer
 
 def download_kaggle_main_db(zip = False, tables_amount = 0, force = False):
     tables = [
@@ -226,3 +227,41 @@ def _compute_synergy_score(row):
     rarity_diversity = row["winner_rarity_diversity"]
     spell_troop_balance = abs(row["winner_spell_troop_ratio"] - 1)  # Ideal balance is close to 1
     return rarity_diversity * (1 - spell_troop_balance)
+
+def handle_missing_values(df, column, strategy='auto', n_neighbors=5):
+    """
+    Handle missing values based on each column's characteristics.
+    """
+    if strategy == 'auto':
+        if df[column].isnull().sum() > 0:
+            if df[column].dtype in [np.float64, np.int64]:
+                # For numerical columns, use median if skewed, otherwise use mean
+                if df[column].skew() > 1 or df[column].skew() < -1:
+                    df[column] = df[column].fillna(df[column].median())
+                else:
+                    df[column] = df[column].fillna(df[column].mean())
+            else:
+                # For categorical columns, use mode
+                df[column] = df[column].fillna(df[column].mode()[0])
+    elif strategy == 'knn':
+        imputer = KNNImputer(n_neighbors)
+        df[column] = imputer.fit_transform(df[column].values.reshape(-1, 1))
+    elif strategy == 'drop':
+        df = df.dropna(subset=[column])
+    elif strategy == 'fill_zero':
+        df[column] = df[column].fillna(0)
+    elif strategy == 'fill_mean':
+        if df[column].dtype in [np.float64, np.int64]:
+            df[column] = df[column].fillna(df[column].mean())
+    elif strategy == 'fill_median':
+        if df[column].dtype in [np.float64, np.int64]:
+            df[column] = df[column].fillna(df[column].median())
+    elif strategy == 'fill_mode':
+        df[column] = df[column].fillna(df[column].mode()[0])
+    elif strategy == 'interpolate':
+        df[column] = df[column].interpolate()
+    elif strategy == None:
+        pass
+    else:
+        raise ValueError(f"Unknown strategy: {strategy}")
+    return df

@@ -295,13 +295,13 @@ def get_pca_optimal_components(battles_df):
     df_numeric = df_numeric.drop(columns=id_features_to_remove)
     scaler = StandardScaler()
     df_scaled = scaler.fit_transform(df_numeric)
-    pca = PCA().fit(df_scaled)  # Compute PCA on data
+    pca = PCA().fit(df_scaled)  # Compute PCA
     cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
     n = np.argmax(cumulative_variance >= 0.95) + 1
     plt.plot(range(1, len(pca.explained_variance_ratio_) + 1), cumulative_variance, marker='o')
     plt.xlabel("Number of Components")
     plt.ylabel("Cumulative Explained Variance")
-    plt.axhline(y=0.95, color='r', linestyle='--')  # 95% threshold
+    plt.axhline(y=0.95, color='r', linestyle='--')  # 95% threshold heuristic
     plt.show()
     print(f"Best component: {n} with a cumulative_variance value of: {cumulative_variance[n-1]:.4f}")
-    return df_numeric, n
+    return df_scaled, n

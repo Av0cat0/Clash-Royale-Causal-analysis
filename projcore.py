@@ -2,8 +2,10 @@ import os
 import kaggle
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
+import matplotlib.pyplot as plt
 import ast
 
 def download_kaggle_main_db(zip = False, tables_amount = 0, force = False):
@@ -117,8 +119,6 @@ def compute_deck_strength(battles_df, card_win_rates):
 def _feature_engineering(battles_df, winning_card_list_df):
     battles_df['battleTime'] = pd.to_datetime(battles_df['battleTime'])
     numeric_cols = [
-        'winner.princessTowersHitPoints',
-        'loser.princessTowersHitPoints',
         'winner.startingTrophies',
         'loser.startingTrophies',
         'winner.trophyChange',
@@ -167,7 +167,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df["winner_count"] = battles_df["winner.tag"].map(winner_counts)
     battles_df["loser_count"] = battles_df["loser.tag"].map(loser_counts)
     battles_df["total_games"] = battles_df["winner_count"] + battles_df["loser_count"]
-    battles_df["win_lose_ratio"] = battles_df.apply(lambda row: 1.0 if row["loser_count"] == 0 else row["winner_count"] / row["loser_count"], axis=1)
+    battles_df["win_lose_ratio"] = battles_df.apply(lambda row: 1.0 if row["loser_count"] == 0 else row["winner_count"] / (row["loser_count"]+row[winner_counts]), axis=1)
     winning_card_set = set(winning_card_list_df["card_id"])
     battles_df["winner_winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "winner", winning_card_set), axis=1)
     battles_df["loser_winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "loser", winning_card_set), axis=1)
@@ -286,3 +286,22 @@ def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=-1)
     else:
         raise ValueError(f"Unknown strategy: {strategy}")
     return df
+
+def get_pca_optimal_components(battles_df):
+    numerical_columns = battles_df.select_dtypes(include=[np.number]).columns
+    id_features_to_remove = ['winner.tag', 'loser.tag', 'gameMode.id', 'winner.clan.tag', 'winner.clan.badgeId', \
+                            'loser.clan.badgeId', 'loser.clan.tag']
+    df_numeric = battles_df[numerical_columns].copy()
+    df_numeric = df_numeric.drop(columns=id_features_to_remove)
+    scaler = StandardScaler()
+    df_scaled = scaler.fit_transform(df_numeric)
+    pca = PCA().fit(df_scaled)  # Compute PCA on data
+    cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+    n = np.argmax(cumulative_variance >= 0.95) + 1
+    plt.plot(range(1, len(pca.explained_variance_ratio_) + 1), cumulative_variance, marker='o')
+    plt.xlabel("Number of Components")
+    plt.ylabel("Cumulative Explained Variance")
+    plt.axhline(y=0.95, color='r', linestyle='--')  # 95% threshold
+    plt.show()
+    print(f"Best component: {n} with a cumulative_variance value of: {cumulative_variance[n-1]:.4f}")
+    return df_numeric, n

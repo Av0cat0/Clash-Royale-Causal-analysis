@@ -167,7 +167,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df["winner_count"] = battles_df["winner.tag"].map(winner_counts)
     battles_df["winner_losing_count"] = battles_df["winner.tag"].map(loser_counts).fillna(0)
     battles_df["total_games_for_winner"] = battles_df["winner_count"] + battles_df["winner_losing_count"]
-    battles_df["winner.win_lose_ratio"] = battles_df.apply(lambda row: 1.0 if battles_df["winner_losing_count"] == 0 else row["winner_count"] / battles_df["total_games_for_winner"], axis=1)
+    battles_df["winner.win_lose_ratio"] = battles_df.apply(lambda row: 1.0 if row["winner_losing_count"] == 0 else row["winner_count"] / row["total_games_for_winner"], axis=1)
     winning_card_set = set(winning_card_list_df["card_id"])
     battles_df["winner_winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "winner", winning_card_set), axis=1)
     battles_df["loser_winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "loser", winning_card_set), axis=1)

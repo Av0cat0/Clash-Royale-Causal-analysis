@@ -167,7 +167,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df["winner_count"] = battles_df["winner.tag"].map(winner_counts)
     battles_df["loser_count"] = battles_df["loser.tag"].map(loser_counts)
     battles_df["total_games"] = battles_df["winner_count"] + battles_df["loser_count"]
-    battles_df["win_lose_ratio"] = battles_df.apply(lambda row: 1.0 if row["loser_count"] == 0 else row["winner_count"] / (row["loser_count"]+row[winner_counts]), axis=1)
+    battles_df["win_lose_ratio"] = battles_df.apply(lambda row: 1.0 if row["loser_count"] == 0 else row["winner_count"] / (row["loser_count"]+row["winner_count"]), axis=1)
     winning_card_set = set(winning_card_list_df["card_id"])
     battles_df["winner_winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "winner", winning_card_set), axis=1)
     battles_df["loser_winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "loser", winning_card_set), axis=1)
@@ -287,12 +287,16 @@ def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=-1)
         raise ValueError(f"Unknown strategy: {strategy}")
     return df
 
-def get_pca_optimal_components(battles_df):
+def get_numerical_dataset(battles_df):
     numerical_columns = battles_df.select_dtypes(include=[np.number]).columns
     id_features_to_remove = ['winner.tag', 'loser.tag', 'gameMode.id', 'winner.clan.tag', 'winner.clan.badgeId', \
                             'loser.clan.badgeId', 'loser.clan.tag']
     df_numeric = battles_df[numerical_columns].copy()
     df_numeric = df_numeric.drop(columns=id_features_to_remove)
+    return df_numeric
+
+def get_pca_optimal_components(battles_df):
+    df_numeric = get_numerical_dataset(battles_df)
     scaler = StandardScaler()
     df_scaled = scaler.fit_transform(df_numeric)
     pca = PCA().fit(df_scaled)  # Compute PCA

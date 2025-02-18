@@ -206,8 +206,9 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df = battles_df.round(6)
     battles_df['winner.deck_weighted_strength'] = compute_deck_strength(battles_df, card_win_rates)
     avg_elixir = battles_df["winner.elixir.average"].mean()
-    elixir_lower_bound = avg_elixir - 0.3
-    elixir_upper_bound = avg_elixir + 0.3
+    epsilon_zero = 0.2
+    elixir_lower_bound = avg_elixir - epsilon_zero
+    elixir_upper_bound = avg_elixir + epsilon_zero
     battles_df["winner.elixir_score"] = battles_df["winner.elixir.average"].apply(lambda x: elixir_score(x, elixir_lower_bound, elixir_upper_bound))
     battles_df["loser.elixir_score"] = battles_df["loser.elixir.average"].apply(lambda x: elixir_score(x, elixir_lower_bound, elixir_upper_bound))
     features_to_normalize = [

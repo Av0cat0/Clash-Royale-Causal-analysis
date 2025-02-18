@@ -234,7 +234,8 @@ def _feature_engineering(battles_df, winning_card_list_df):
     #features_to_normalize.remove("winner.deck_weighted_strength")
     #battles_df.drop(columns=features_to_normalize, inplace=True)
     
-    return battles_df.drop('Unnamed: 0', axis=1, inplace=True)
+
+    return battles_df.drop('Unnamed: 0', axis=1)
 
 def _count_winning_cards(row, prefix, winning_card_set):
     return sum(row[f"{prefix}.card{i}.id"] in winning_card_set for i in range(1, 9))

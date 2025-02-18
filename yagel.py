@@ -64,22 +64,22 @@ def add_features(df):
     df['clan_advantage'] = ((df['winner.clan.tag'].notna()) & 
                             (df['loser.clan.tag'].isna())).astype(int)
     
-    df['elixir_advantage'] = df['winner.elixir.average'].gt(
+    df['winner_loser.elixir_advantage'] = df['winner.elixir.average'].gt(
         df['loser.elixir.average']).astype(int)
     
-    df['balanced_deck_winner'] = ((df['winner.troop.count'] > 2) & 
+    df['winner.balanced_deck'] = ((df['winner.troop.count'] > 2) & 
                                  (df['winner.spell.count'] > 1) & 
                                  (df['winner.structure.count'] > 0)).astype(int)
-    df['balanced_deck_loser'] = ((df['loser.troop.count'] > 2) & 
+    df['loser.balanced_deck'] = ((df['loser.troop.count'] > 2) & 
                                 (df['loser.spell.count'] > 1) & 
                                 (df['loser.structure.count'] > 0)).astype(int)
     
     arena_mean = df.groupby('arena.id')['winner.totalcard.level'].transform('mean')
-    df['underleveled_winner'] = (df['winner.totalcard.level'] < arena_mean).astype(int)
+    df['winner.underleveled'] = (df['winner.totalcard.level'] < arena_mean).astype(int)
     arena_mean_loser = df.groupby('arena.id')['loser.totalcard.level'].transform('mean')
-    df['underleveled_loser'] = (df['loser.totalcard.level'] < arena_mean_loser).astype(int)
+    df['loser.underleveled'] = (df['loser.totalcard.level'] < arena_mean_loser).astype(int)
     
-    df['crown_dominance'] = df['winner.crowns'].ge(2).astype(int)
+    df['winner.crown_dominance'] = df['winner.crowns'].ge(2).astype(int)
     
     df['tournament_participant'] = df['tournamentTag'].notna().astype(int)
     

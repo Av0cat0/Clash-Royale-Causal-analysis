@@ -310,3 +310,28 @@ def get_pca_optimal_components(battles_df):
     plt.show()
     print(f"Best component: {n} with a cumulative_variance value of: {cumulative_variance[n-1]:.4f}")
     return df_scaled, n
+
+def get_t_sne(battles_df, dest_col, preplexity = 30, random_state=42, learning_rate=200, n_iter=1000):
+    numerical_features = battles_df.select_dtypes(include=[np.number])
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(numerical_features)
+    tsne_3d = TSNE(n_components=3, perplexity=30, random_state=42, learning_rate=200, n_iter=1000)
+    X_embedded_3d = tsne_3d.fit_transform(X_scaled)
+    battles_df_tsne_3d = pd.DataFrame(X_embedded_3d, columns=['TSNE1', 'TSNE2', 'TSNE3'])
+    battles_df_tsne_3d['Cluster'] = battles_df[dest_col]
+    return battles_df_tsne_3d
+
+def plot_t_sne_as_3d_scatter(battles_df_tsne_3d, dest_col):
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+    sc = ax.scatter(
+        battles_df_tsne_3d['TSNE1'], battles_df_tsne_3d['TSNE2'], battles_df_tsne_3d['TSNE3'], 
+        c=battles_df_tsne_3d['Cluster'], cmap='viridis', alpha=0.7
+    )
+    ax.set_title("3D t-SNE Visualization of Battle Data")
+    ax.set_xlabel("t-SNE Component 1")
+    ax.set_ylabel("t-SNE Component 2")
+    ax.set_zlabel("t-SNE Component 3")
+    cbar = plt.colorbar(sc, ax=ax, shrink=0.6)
+    cbar.set_label(dest_col)
+    plt.show()

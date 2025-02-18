@@ -7,6 +7,7 @@ from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
 import ast
+from sklearn.manifold import TSNE
 
 def download_kaggle_main_db(zip = False, tables_amount = 0, force = False):
     tables = [

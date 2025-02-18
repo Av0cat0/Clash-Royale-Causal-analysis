@@ -205,6 +205,11 @@ def _feature_engineering(battles_df, winning_card_list_df):
     card_win_rates = {pair: stats['wins'] / stats['appearances'] for pair, stats in card_stats.items()}
     battles_df = battles_df.round(6)
     battles_df['winner.deck_weighted_strength'] = compute_deck_strength(battles_df, card_win_rates)
+    avg_elixir = battles_df["winner.elixir.average"].mean()
+    elixir_lower_bound = avg_elixir - 0.3
+    elixir_upper_bound = avg_elixir + 0.3
+    battles_df["winner.elixir_score"] = battles_df["winner.elixir.average"].apply(lambda x: elixir_score(x, elixir_lower_bound, elixir_upper_bound))
+    battles_df["loser.elixir_score"] = battles_df["loser.elixir.average"].apply(lambda x: elixir_score(x, elixir_lower_bound, elixir_upper_bound))
     features_to_normalize = [
     "winner.deck_weighted_strength",
     "winner.avg_card_level",
@@ -219,10 +224,10 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df[features_to_normalize] = scaler.fit_transform(battles_df[features_to_normalize])
     battles_df["winner.deck_final_score"] = (
         0.35 * battles_df["winner.deck_weighted_strength"] +
-        0.20 * battles_df["winner.avg_card_level"] +
+        0.20 * battles_df["winner.elixir_score"] +
         0.15 * (battles_df["winner.max_card_level"] + battles_df["winner.min_card_level"]) / 2 +
         0.10 * (1 - battles_df["winner.level_variance"]) +
-        0.10 * np.log1p(battles_df["winner.elixir.average"]) +  # log1p(x) = log(1 + x) for stability
+        0.10 * battles_df["winner.avg_card_level"] +
         0.10 * battles_df["winner.synergy_score"]
     )
     battles_df = battles_df.round(6)
@@ -340,3 +345,10 @@ def plot_t_sne_as_3d_scatter(battles_df_tsne_3d, dest_col):
     cbar = plt.colorbar(sc, ax=ax, shrink=0.6)
     cbar.set_label(dest_col)
     plt.show()
+
+def elixir_score(elixir_value, lower_bound, upper_bound):
+    if lower_bound <= elixir_value <= upper_bound:
+        return 1  # Best score
+    else:
+        distance = min(abs(elixir_value - lower_bound), abs(elixir_value - upper_bound))
+        return np.exp(-distance)  # Exponential decay to penalize further distances

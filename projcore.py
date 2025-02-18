@@ -231,7 +231,7 @@ def _count_winning_cards(row, prefix, winning_card_set):
 def _compute_synergy_score(row):
     """Calculates synergy based on rarity diversity and spell/troop balance."""
     buildings = row["winner.structure.count"]
-    rarity_diversity = row["winner_rarity_diversity"]
+    rarity_diversity = row["winner.rarity_diversity"]
     if buildings < 3:
         balance_anchor = 0
         if buildings == 0:
@@ -240,10 +240,10 @@ def _compute_synergy_score(row):
             balance_anchor = 0.44
         else:
             balance_anchor = 0.375
-        penalty = abs(row["winner_spell_troop_ratio"] - balance_anchor)
+        penalty = abs(row["winner.spell_troop_ratio"] - balance_anchor)
         return rarity_diversity * (1 - penalty)
     else:
-        return rarity_diversity * row["winner_spell_troop_ratio"]
+        return rarity_diversity * row["winner.spell_troop_ratio"]
 
 def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=-1):
     """

@@ -102,7 +102,8 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     # features to remove
     levels_and_ids = [f'loser.card{i}.id' for i in range(1, 9)] + [f'loser.card{i}.level' for i in range(1, 9)] + \
                         [f'winner.card{i}.id' for i in range(1, 9)] + [f'winner.card{i}.level' for i in range(1, 9)]
-    features_to_remove = ['tournamentTag'] + levels_and_ids
+    features_to_remove = levels_and_ids + ['winner.clan.tag', 'winner.clan.badgeId', \
+                            'loser.clan.badgeId', 'loser.clan.tag', 'tournamentTag']
     battles_df.drop(columns=features_to_remove, inplace=True)
 
 
@@ -167,7 +168,11 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df["winner.count"] = battles_df["winner.tag"].map(winner_counts)
     battles_df["winner.losing_count"] = battles_df["winner.tag"].map(loser_counts).fillna(0)
     battles_df["winner.total_games_for"] = battles_df["winner.count"] + battles_df["winner.losing_count"]
-    battles_df["winner.win_lose_ratio"] = battles_df.apply(lambda row: 1.0 if row["winner.losing_count"] == 0 else row["winner.count"] / row["winner.total_games_for"], axis=1)
+    battles_df["winner.win_lose_ratio"] = np.where(
+    battles_df["winner.losing_count"] == 0,
+    1.0,
+    battles_df["winner.count"] / battles_df["winner.total_games_for"]
+    )
     battles_df["winner.win_lose_ratio_Z_score"] = (battles_df["winner.win_lose_ratio"] - battles_df["winner.win_lose_ratio"].mean()) / battles_df["winner.win_lose_ratio"].std()
     winning_card_set = set(winning_card_list_df["card_id"])
     battles_df["winner.winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "winner", winning_card_set), axis=1)
@@ -223,7 +228,8 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df = battles_df.round(6)
     #features_to_normalize.remove("winner.deck_weighted_strength")
     #battles_df.drop(columns=features_to_normalize, inplace=True)
-    return battles_df
+    
+    return battles_df.drop('Unnamed: 0', axis=1, inplace=True)
 
 def _count_winning_cards(row, prefix, winning_card_set):
     return sum(row[f"{prefix}.card{i}.id"] in winning_card_set for i in range(1, 9))
@@ -290,8 +296,7 @@ def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=-1)
 
 def get_numerical_dataset(battles_df):
     numerical_columns = battles_df.select_dtypes(include=[np.number]).columns
-    id_features_to_remove = ['winner.tag', 'loser.tag', 'gameMode.id', 'winner.clan.tag', 'winner.clan.badgeId', \
-                            'loser.clan.badgeId', 'loser.clan.tag']
+    id_features_to_remove = ['winner.tag', 'loser.tag', 'gameMode.id']
     df_numeric = battles_df[numerical_columns].copy()
     df_numeric = df_numeric.drop(columns=id_features_to_remove)
     return df_numeric

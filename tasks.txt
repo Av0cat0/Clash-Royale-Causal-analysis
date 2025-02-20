@@ -1,0 +1,36 @@
+## DATELINE: 21/02 15:00
+### SALEH:
+- 2.1 Data Acquisition and 2.1.1 Data Structure in the article, add a graph for 2.1.1
+- 2.4.2 Deck Similarity - t-SNE and MDS
+-- create another graph for scaled appearances, find densed areas in both graphs, and do the same for t-sne
+- 2.4.3 Causal Model
+
+### YAGEL:
+- 2.2 Exploratory Data Analysis in the article
+- continue with DAG aftermeth
+- 2.4.3 Causal Model
+
+### RONI:
+:)
+
+
+## DATELINE: 24/02 15:00
+### SALEH:
+- Finish MDS and t-SNE comprasion + add to article
+- Check how to insert MVD usage in code/article
+### YAGEL:
+- FP-grothw algorithms
+- check the following path: handle_behavior - less outliers, more of target behavior,
+     yagel's idea of avg elixer<2 or >6, validate win_rate for those decks
+### RONI:
+- Graph repressentation
+- DeepWalk
+- change pictures to their new picture in the article
+
+
+# upcoming:
+**Please don't take a task from this task bucket, other tasks are important as well**
+noise
+pruning
+simpson’s paradox
+pressent the project with canvas

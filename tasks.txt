@@ -6,12 +6,10 @@
 - 2.4.3 Causal Model
 
 ### YAGEL:
-- 2.2 Exploratory Data Analysis in the article
-- continue with DAG aftermeth
+- 2.2 Exploratory Data Analysis in the article (DAG + small subsection)
+- fix correlation thresholds consistency, there are 3 thresholds: 0.3,0.55,0.7, we need at most 2 so we need to discuss that
 - 2.4.3 Causal Model
 
-### RONI:
-:)
 
 
 ## DATELINE: 24/02 15:00
@@ -19,10 +17,12 @@
 - Finish MDS and t-SNE comprasion + add to article
 - Check how to insert MVD usage in code/article
 ### YAGEL:
-- FP-grothw algorithms
+- continue with DAG aftermeth
+- FP-growth algorithm
 - check the following path: handle_behavior - less outliers, more of target behavior,
      yagel's idea of avg elixer<2 or >6, validate win_rate for those decks
 ### RONI:
+- PCA: check the average data of the outliered subgraph and other subgraphs
 - Graph repressentation
 - DeepWalk
 - change pictures to their new picture in the article

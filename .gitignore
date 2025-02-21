@@ -1,6 +1,9 @@
 /*.csv
 /.zip
 /venv
+/.venv
 /*.pyc
 /proposal.pdf
 /data/*
+/__pycache__
+/__pycache__/*.pyc

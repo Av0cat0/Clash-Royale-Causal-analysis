@@ -9,7 +9,20 @@ import matplotlib.pyplot as plt
 import ast
 from sklearn.manifold import TSNE
 
+PCA_VARIENCE_THRESHOLD = 0.95
+
 def download_kaggle_main_db(zip = False, tables_amount = 0, force = False):
+    """
+    Downloads the primary Clash Royale dataset from Kaggle.
+
+    Parameters:
+    - zip (bool): Whether to download as a zip file.
+    - tables_amount (int): Number of additional tables to download.
+    - force (bool): If True, forces re-download even if files exist.
+
+    Returns:
+    - Downloads CSV files into the script directory.
+    """
     tables = [
         "BattlesStaging_01012021_WL_tagged/BattlesStaging_01012021_WL_tagged.csv",
         "CardMasterListSeason18_12082020.csv",
@@ -29,26 +42,37 @@ def download_kaggle_main_db(zip = False, tables_amount = 0, force = False):
     script_directory = os.path.dirname(os.path.abspath(__file__))
     for i in range(min(tables_amount, len(additional_tables))):
         tables.append(additional_tables[i])
-    for i in range(len(tables)):
+    for table in tables:
         try:
-            if not force and os.path.exists(os.path.join(script_directory, tables[i].split('/')[-1])):
-                print(f"File {tables[i]} already exists, skipping download")
+            if not force and os.path.exists(os.path.join(script_directory, table.split('/')[-1])):
+                print(f"File {table} already exists, skipping download")
                 continue
             else:
                 print("Downloading main dataset")
-                print(f"Downloading {tables[i]}")
+                print(f"Downloading {table}")
                 kaggle.api.dataset_download_file(
                     "bwandowando/clash-royale-season-18-dec-0320-dataset",
                     path=script_directory,
-                    file_name=tables[i]
+                    file_name=table
                 )
-                print(f"Downloaded and extracted main dataset - table of {tables[i]} to {script_directory}")
+                print(f"Downloaded and extracted main dataset - table of {table} to {script_directory}")
         except kaggle.rest.ApiException as e:
             raise ValueError("Kaggle API credentials not found or invalid.") from e
         except Exception as e:
             raise Exception(f"Failed to download main dataset: {e}")
-    
+
+
 def download_kaggle_secondary_db(zip = False, force = False):
+    """
+    Downloads the secondary Clash Royale datasets from Kaggle.
+
+    Parameters:
+    - zip (bool): Whether to download as a zip file.
+    - force (bool): If True, forces re-download even if files exist.
+
+    Returns:
+    - Downloads CSV files into the script directory.
+    """
     script_directory = os.path.dirname(os.path.abspath(__file__))
     try:
         if not force and os.path.exists(os.path.join(script_directory, "clash_royal_data.csv")):
@@ -65,17 +89,29 @@ def download_kaggle_secondary_db(zip = False, force = False):
         raise ValueError("Kaggle API credentials not found or invalid.") from e
     except Exception as e:
         raise Exception(f"Failed to download secondary dataset: {e}") 
-    
+
+
 def download_kaggle_datasets(zip = False, main_db_tables = 0):
     download_kaggle_main_db(zip, main_db_tables)
     download_kaggle_secondary_db(zip)
 
+
 def feature_preprocessing(battles_df, winning_card_list_df):
-    ############################
-    # Notice that some features shouldn't be normalized, such as kingTowerHitPoints,
-    # as they are calculated differently according to the trophy level
-    ############################
-    
+    """
+    Preprocesses battle dataset by:
+    1. Normalizing SOME numeric features (not every feature should be normalized, such as kingTowerHitPoints).
+    2. Encoding categorical variables.
+    3. Handling missing values.
+    4. Feature engineering to create new useful features.
+
+    Parameters:
+    - battles_df (pd.DataFrame): The battle dataset.
+    - winning_card_list_df (pd.DataFrame): Dataset containing winning cards.
+
+    Returns:
+    - pd.DataFrame: The preprocessed dataset.
+    """
+
     # Normalize features
     scaler = MinMaxScaler()
     features_to_normalize = ['average.startingTrophies', 'loser.startingTrophies', 'winner.startingTrophies',
@@ -96,20 +132,33 @@ def feature_preprocessing(battles_df, winning_card_list_df):
         elif 'princessTowersHitPoints' in feature:
             _handle_missing_values(battles_df, feature, strategy='fill', value="[0]")
 
-    # Feature engineering
+    # Apply Feature Engineering
     battles_df = _feature_engineering(battles_df, winning_card_list_df)
 
-    # features to remove
+    # Features Removal
     levels_and_ids = [f'loser.card{i}.id' for i in range(1, 9)] + [f'loser.card{i}.level' for i in range(1, 9)] + \
                         [f'winner.card{i}.id' for i in range(1, 9)] + [f'winner.card{i}.level' for i in range(1, 9)]
     features_to_remove = levels_and_ids + ['winner.clan.tag', 'winner.clan.badgeId', \
                             'loser.clan.badgeId', 'loser.clan.tag', 'tournamentTag']
     battles_df.drop(columns=features_to_remove, inplace=True)
 
-
     return battles_df
 
-def compute_deck_strength(battles_df, card_win_rates):
+
+def _compute_deck_strength(battles_df, card_win_rates):
+    """
+    Computes the overall strength of a deck based on individual card win rates and levels.
+    This function evaluates the effectiveness of a deck by summing the weighted win rates 
+    of the cards in a player's deck, considering both the card level and historical win rates.
+
+    Parameters:
+    - battles_df (pd.DataFrame): The battle dataset.
+    - card_win_rates (dict): A dictionary where keys are card IDs and values are their respective 
+      win rates (e.g., {card_id1: 0.55, card_id2: 0.62}).
+
+    Returns:
+    - np.ndarray: A NumPy array containing the computed strength of each deck in battles_df.
+    """
     deck_strength = np.zeros(len(battles_df))
     for i in range(1, 9):
         card_ids = battles_df[f'winner.card{i}.id']
@@ -118,7 +167,138 @@ def compute_deck_strength(battles_df, card_win_rates):
         deck_strength += win_rates * card_levels
     return deck_strength
 
+
+def _count_winning_cards(row, prefix, winning_card_set):
+    """
+    Counts how many cards in a player's deck belong to the predefined set of 'winning' cards.
+
+    Parameters:
+    - row (pd.Series): A single row from the battles dataset, representing one battle.
+    - prefix (str): Either "winner" or "loser", indicating which player's deck is being evaluated.
+    - winning_card_set (set): A set of card IDs that are considered 'winning' cards.
+
+    Returns:
+    - int: The number of cards in the player's deck that are part of `winning_card_set`.
+    """
+    return sum(row[f"{prefix}.card{i}.id"] in winning_card_set for i in range(1, 9))
+
+
+def _compute_synergy_score(row):
+    """
+    Computes the synergy score based on deck structure, rarity diversity, and balance.
+
+    Parameters:
+    - row (pd.Series): A single row from battles_df.
+
+    Returns:
+    - float: Synergy score (0 to 1).
+    """
+    buildings = row["winner.structure.count"]
+    rarity_diversity = row["winner.rarity_diversity"]
+    if buildings < 3:
+        balance_anchor = 0.375 if buildings == 2 else (0.44 if buildings == 1 else 0.355)
+        penalty = abs(row["winner.spell_troop_ratio"] - balance_anchor)
+        return rarity_diversity * (1 - penalty)
+    return rarity_diversity * row["winner.spell_troop_ratio"]
+    
+
+def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=-1):
+    """
+    Handles missing values in a DataFrame based on different strategies.
+
+    Parameters:
+    - df (pd.DataFrame): The input DataFrame.
+    - column (str): Column name to process.
+    - strategy (str): How to handle missing values.
+    - n_neighbors (int): For KNN imputation.
+    - value (int/float/str): Value for "fill" strategy.
+
+    Returns:
+    - pd.DataFrame: Updated DataFrame with missing values handled.
+    """
+    if column not in df.columns:
+        raise ValueError(f"Column '{column}' not found in DataFrame")
+    if df[column].isnull().sum() == 0:
+        return df  
+    if strategy == 'auto':
+        if pd.api.types.is_numeric_dtype(df[column]):
+            # Use median if skewed, otherwise use mean
+            if abs(df[column].skew()) > 1:
+                df[column].fillna(df[column].median(), inplace=True)
+            else:
+                df[column].fillna(df[column].mean(), inplace=True)
+        else:
+            # Use mode for categorical columns
+            df[column].fillna(df[column].mode()[0], inplace=True)
+    elif strategy == 'knn':
+        imputer = KNNImputer(n_neighbors=n_neighbors)
+        df[column] = imputer.fit_transform(df[[column]]).flatten()
+    elif strategy == 'fill':
+        df[column] = df[column].fillna(value)
+    elif strategy == 'drop':
+        df = df.dropna(subset=[column])
+    elif strategy == 'fill_zero':
+        df[column] = df[column].fillna(0)
+    elif strategy == 'fill_mean':
+        if df[column].dtype in [np.float64, np.int64]:
+            df[column] = df[column].fillna(df[column].mean())
+    elif strategy == 'fill_median':
+        if df[column].dtype in [np.float64, np.int64]:
+            df[column] = df[column].fillna(df[column].median())
+    elif strategy == 'fill_mode':
+        df[column] = df[column].fillna(df[column].mode()[0])
+    elif strategy == 'interpolate':
+        df[column] = df[column].interpolate()
+    elif strategy == None:
+        pass
+    else:
+        raise ValueError(f"Unknown strategy: {strategy}")
+    return df
+
+
+def _elixir_score(elixir_value, lower_bound, upper_bound):
+    """
+    Computes an elixir efficiency score based on how close the elixir value is to the optimal range.
+    The score follows these rules:
+    - If `elixir_value` is within [lower_bound, upper_bound], it gets a perfect score of 1.
+    - If `elixir_value` is outside the range, it gets penalized based on its distance from the range.
+    - The penalty follows an exponential decay function exp(-distance), meaning:
+        - Small deviations receive a mild penalty.
+        - Large deviations are penalized heavily.
+
+    Parameters:
+    - elixir_value (float): The player's average elixir cost in the battle.
+    - lower_bound (float): The lower threshold for an optimal elixir value.
+    - upper_bound (float): The upper threshold for an optimal elixir value.
+
+    Returns:
+    - float: A score between (0,1], where 1 means the elixir cost is optimal.
+    """
+    if lower_bound <= elixir_value <= upper_bound:
+        return 1 
+    distance = min(abs(elixir_value - lower_bound), abs(elixir_value - upper_bound))
+    return np.exp(-distance)  # Exponential decay to penalize further distances
+
+
 def _feature_engineering(battles_df, winning_card_list_df):
+    """
+    Performs feature engineering on the battle dataset to extract meaningful attributes.
+
+    This function:
+    1. Converts timestamps to datetime format.
+    2. Computes numerical transformations (e.g., ratios, standard deviations).
+    3. Derives new features related to elixir usage, deck composition, and card strength.
+    4. Encodes categorical variables and normalizes scores.
+    5. Computes win-lose ratios and performance metrics.
+    6. Removes unnecessary columns to optimize dataset quality.
+
+    Parameters:
+    - battles_df (pd.DataFrame): The battle dataset containing match statistics.
+    - winning_card_list_df (pd.DataFrame): A dataset containing the IDs of strong (high win-rate) cards.
+
+    Returns:
+    - pd.DataFrame: The transformed dataset with additional features and cleaned data.
+    """
     battles_df['battleTime'] = pd.to_datetime(battles_df['battleTime'])
     numeric_cols = [
         'winner.startingTrophies',
@@ -204,14 +384,14 @@ def _feature_engineering(battles_df, winning_card_list_df):
             card_stats[pair]['appearances'] += 1  
     card_win_rates = {pair: stats['wins'] / stats['appearances'] for pair, stats in card_stats.items()}
     battles_df = battles_df.round(6)
-    battles_df['winner.deck_weighted_strength'] = compute_deck_strength(battles_df, card_win_rates)
+    battles_df['winner.deck_weighted_strength'] = _compute_deck_strength(battles_df, card_win_rates)
     avg_elixir = battles_df["winner.elixir.average"].mean()
     epsilon_zero = 0.2
     elixir_lower_bound = avg_elixir - epsilon_zero
     elixir_upper_bound = avg_elixir + epsilon_zero
-    battles_df["winner.elixir_score"] = battles_df["winner.elixir.average"].apply(lambda x: elixir_score(x, elixir_lower_bound, elixir_upper_bound))
-    battles_df["loser.elixir_score"] = battles_df["loser.elixir.average"].apply(lambda x: elixir_score(x, elixir_lower_bound, elixir_upper_bound))
-    features_to_normalize = [
+    battles_df["winner.elixir_score"] = battles_df["winner.elixir.average"].apply(lambda x: _elixir_score(x, elixir_lower_bound, elixir_upper_bound))
+    battles_df["loser.elixir_score"] = battles_df["loser.elixir.average"].apply(lambda x: _elixir_score(x, elixir_lower_bound, elixir_upper_bound))
+    scoring_features = [
     "winner.deck_weighted_strength",
     "winner.avg_card_level",
     "winner.max_card_level",
@@ -222,7 +402,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
     ]
     scaler = MinMaxScaler()
     battles_df["winner.synergy_score"] = battles_df.apply(_compute_synergy_score, axis=1)
-    battles_df[features_to_normalize] = scaler.fit_transform(battles_df[features_to_normalize])
+    battles_df[scoring_features] = scaler.fit_transform(battles_df[scoring_features])
     battles_df["winner.deck_final_score"] = (
         0.35 * battles_df["winner.deck_weighted_strength"] +
         0.20 * battles_df["winner.elixir_score"] +
@@ -231,109 +411,92 @@ def _feature_engineering(battles_df, winning_card_list_df):
         0.10 * battles_df["winner.avg_card_level"] +
         0.10 * battles_df["winner.synergy_score"]
     )
-    battles_df = battles_df.round(6)
-    #features_to_normalize.remove("winner.deck_weighted_strength")
-    #battles_df.drop(columns=features_to_normalize, inplace=True)
-    
-
+    battles_df = battles_df.round(7)
     return battles_df.drop('Unnamed: 0', axis=1)
 
-def _count_winning_cards(row, prefix, winning_card_set):
-    return sum(row[f"{prefix}.card{i}.id"] in winning_card_set for i in range(1, 9))
-
-def _compute_synergy_score(row):
-    """Calculates synergy based on rarity diversity and spell/troop balance."""
-    buildings = row["winner.structure.count"]
-    rarity_diversity = row["winner.rarity_diversity"]
-    if buildings < 3:
-        balance_anchor = 0
-        if buildings == 0:
-            balance_anchor = 0.355
-        elif buildings == 1:
-            balance_anchor = 0.44
-        else:
-            balance_anchor = 0.375
-        penalty = abs(row["winner.spell_troop_ratio"] - balance_anchor)
-        return rarity_diversity * (1 - penalty)
-    else:
-        return rarity_diversity * row["winner.spell_troop_ratio"]
-
-def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=-1):
-    """
-    Handle missing values based on each column's characteristics.
-    """
-    if column not in df.columns:
-        raise ValueError(f"Column '{column}' not found in DataFrame")
-    if df[column].isnull().sum() == 0:
-        return df  
-    if strategy == 'auto':
-        if pd.api.types.is_numeric_dtype(df[column]):
-            # Use median if skewed, otherwise use mean
-            if abs(df[column].skew()) > 1:
-                df[column].fillna(df[column].median(), inplace=True)
-            else:
-                df[column].fillna(df[column].mean(), inplace=True)
-        else:
-            # Use mode for categorical columns
-            df[column].fillna(df[column].mode()[0], inplace=True)
-    elif strategy == 'knn':
-        imputer = KNNImputer(n_neighbors=n_neighbors)
-        df[column] = imputer.fit_transform(df[[column]]).flatten()
-    elif strategy == 'fill':
-        df[column] = df[column].fillna(value)
-    elif strategy == 'drop':
-        df = df.dropna(subset=[column])
-    elif strategy == 'fill_zero':
-        df[column] = df[column].fillna(0)
-    elif strategy == 'fill_mean':
-        if df[column].dtype in [np.float64, np.int64]:
-            df[column] = df[column].fillna(df[column].mean())
-    elif strategy == 'fill_median':
-        if df[column].dtype in [np.float64, np.int64]:
-            df[column] = df[column].fillna(df[column].median())
-    elif strategy == 'fill_mode':
-        df[column] = df[column].fillna(df[column].mode()[0])
-    elif strategy == 'interpolate':
-        df[column] = df[column].interpolate()
-    elif strategy == None:
-        pass
-    else:
-        raise ValueError(f"Unknown strategy: {strategy}")
-    return df
 
 def get_numerical_dataset(battles_df):
+    """
+    Extracts the numerical features from the battle dataset and removes non-informative ID features.
+
+    This function selects only numerical columns from `battles_df` and removes specific 
+    identifier columns that do not contribute meaningful information for analysis.
+
+    Parameters:
+    - battles_df (pd.DataFrame): The original battle dataset containing both numerical and categorical features.
+
+    Returns:
+    - pd.DataFrame: A DataFrame containing only relevant numerical features.
+    """
     numerical_columns = battles_df.select_dtypes(include=[np.number]).columns
     id_features_to_remove = ['winner.tag', 'loser.tag', 'gameMode.id']
     df_numeric = battles_df[numerical_columns].copy()
     df_numeric = df_numeric.drop(columns=id_features_to_remove)
     return df_numeric
 
+
 def get_pca_optimal_components(battles_df):
+    """
+    Determines the optimal number of PCA components for dimensionality reduction.
+
+    Parameters:
+    - battles_df (pd.DataFrame): The battle dataset.
+
+    Returns:
+    - np.array: Scaled dataset after PCA.
+    - int: Optimal number of PCA components.
+    """
     df_numeric = get_numerical_dataset(battles_df)
     scaler = StandardScaler()
     df_scaled = scaler.fit_transform(df_numeric)
     pca = PCA().fit(df_scaled)  # Compute PCA
     cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
-    n = np.argmax(cumulative_variance >= 0.95) + 1
+    n = np.argmax(cumulative_variance >= PCA_VARIENCE_THRESHOLD) + 1
     plt.plot(range(1, len(pca.explained_variance_ratio_) + 1), cumulative_variance, marker='o')
     plt.xlabel("Number of Components")
     plt.ylabel("Cumulative Explained Variance")
-    plt.axhline(y=0.95, color='r', linestyle='--')  # 95% threshold heuristic
+    plt.axhline(y=PCA_VARIENCE_THRESHOLD, color='r', linestyle='--')
     plt.show()
     print(f"Best component: {n} with a cumulative_variance value of: {cumulative_variance[n-1]:.4f}")
     return df_scaled, n
 
-def get_t_sne(battles_df, dest_col, preplexity = 30, random_state=42, learning_rate=200, n_iter=1000):
+
+def get_t_sne(battles_df, dest_col, preplexity = 30, learning_rate=200, n_iter=1000):
+    """
+    Computes 3D t-SNE embeddings for visualization.
+
+    Parameters:
+    - battles_df (pd.DataFrame): The battle dataset.
+    - dest_col (str): Column used for color coding.
+    - perplexity (int): t-SNE parameter controlling neighborhood size.
+    - learning_rate (int): Step size for optimization.
+    - n_iter (int): Number of iterations.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing t-SNE embeddings and cluster labels.
+    """
     numerical_features = battles_df.select_dtypes(include=[np.number])
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(numerical_features)
-    tsne_3d = TSNE(n_components=3, perplexity=30, random_state=42, learning_rate=200, n_iter=1000)
+    tsne_3d = TSNE(n_components=3, perplexity=preplexity, learning_rate=learning_rate, n_iter=n_iter)
     X_embedded_3d = tsne_3d.fit_transform(X_scaled)
     battles_df_tsne_3d = pd.DataFrame(X_embedded_3d, columns=['TSNE1', 'TSNE2', 'TSNE3'])
     battles_df_tsne_3d['Cluster'] = battles_df[dest_col]
     return battles_df_tsne_3d
 
+
 def plot_t_sne_as_3d_scatter(battles_df_tsne_3d, dest_col):
+    """
+    Plots a 3D scatter plot of t-SNE embeddings to visualize clusters in the battle dataset.
+
+    Parameters:
+    - battles_df_tsne_3d (pd.DataFrame): A DataFrame containing t-SNE embeddings ('TSNE1', 'TSNE2', 'TSNE3') 
+      and a 'Cluster' column indicating group assignments.
+    - dest_col (str): The name of the column used for color coding in the visualization.
+
+    Returns:
+    - None: Displays a 3D scatter plot of t-SNE embeddings.
+    """
     fig = plt.figure(figsize=(10, 7))
     ax = fig.add_subplot(111, projection='3d')
     sc = ax.scatter(
@@ -347,10 +510,3 @@ def plot_t_sne_as_3d_scatter(battles_df_tsne_3d, dest_col):
     cbar = plt.colorbar(sc, ax=ax, shrink=0.6)
     cbar.set_label(dest_col)
     plt.show()
-
-def elixir_score(elixir_value, lower_bound, upper_bound):
-    if lower_bound <= elixir_value <= upper_bound:
-        return 1  # Best score
-    else:
-        distance = min(abs(elixir_value - lower_bound), abs(elixir_value - upper_bound))
-        return np.exp(-distance)  # Exponential decay to penalize further distances

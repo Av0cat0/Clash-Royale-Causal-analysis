@@ -2,16 +2,17 @@
 ### SALEH:
 - 2.1 Data Acquisition and 2.1.1 Data Structure in the article, add a graph for 2.1.1
 - 2.4.2 Deck Similarity - t-SNE and MDS
--- create another graph for scaled appearances, find densed areas in both graphs, and do the same for t-sne
-- 2.4.3 Causal Model
+-- instead of appearances, check other features and create a subset of features to analyse with MDS/t-SNE, such that will help us conclude conclusions about the high win-rate clusters.
+     use yagel's DAGs and the subset to check intreseting OR related features, and create a subplot of all inspected features (we will downsize it later)
+- explain why you used hamming/cosine/jaccerd metrices in the article 
+- combine plots of MDS/t-sne algorithms to 2 sublplots, each for 1 algorithm which shows all the metrices
+- Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
 
 ### YAGEL:
-- 2.2 Exploratory Data Analysis in the article
-- continue with DAG aftermeth
+- 2.2 Exploratory Data Analysis in the article (DAG + small subsection)
+- fix correlation thresholds consistency, there are 3 thresholds: 0.3,0.55,0.7, we need at most 2 so we need to discuss that
 - 2.4.3 Causal Model
 
-### RONI:
-:)
 
 
 ## DATELINE: 24/02 15:00
@@ -19,10 +20,12 @@
 - Finish MDS and t-SNE comprasion + add to article
 - Check how to insert MVD usage in code/article
 ### YAGEL:
-- FP-grothw algorithms
+- continue with DAG aftermeth
+- FP-growth algorithm
 - check the following path: handle_behavior - less outliers, more of target behavior,
      yagel's idea of avg elixer<2 or >6, validate win_rate for those decks
 ### RONI:
+- PCA: check the average data of the outliered subgraph and other subgraphs
 - Graph repressentation
 - DeepWalk
 - change pictures to their new picture in the article

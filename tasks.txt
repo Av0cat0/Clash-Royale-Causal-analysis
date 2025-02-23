@@ -40,3 +40,4 @@ noise
 pruning
 simpson’s paradox
 pressent the project with canvas
+fix tables explaination in the beginning of the main notebook

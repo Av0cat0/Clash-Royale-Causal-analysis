@@ -10,6 +10,7 @@ import ast
 from sklearn.manifold import TSNE
 
 PCA_VARIENCE_THRESHOLD = 0.95
+ROUNDING_PRECISION = 7
 
 def download_kaggle_main_db(zip = False, tables_amount = 0, force = False):
     """
@@ -383,7 +384,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
                 card_stats[pair] = {'wins': 0, 'appearances': 0}
             card_stats[pair]['appearances'] += 1  
     card_win_rates = {pair: stats['wins'] / stats['appearances'] for pair, stats in card_stats.items()}
-    battles_df = battles_df.round(6)
+    battles_df = battles_df.round(ROUNDING_PRECISION)
     battles_df['winner.deck_weighted_strength'] = _compute_deck_strength(battles_df, card_win_rates)
     avg_elixir = battles_df["winner.elixir.average"].mean()
     epsilon_zero = 0.2
@@ -397,7 +398,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
     "winner.max_card_level",
     "winner.min_card_level",
     "winner.level_variance",
-    "winner.elixir.average",
+    "winner.elixir_score",
     "winner.synergy_score"
     ]
     scaler = MinMaxScaler()
@@ -411,7 +412,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
         0.10 * battles_df["winner.avg_card_level"] +
         0.10 * battles_df["winner.synergy_score"]
     )
-    battles_df = battles_df.round(7)
+    battles_df = battles_df.round(ROUNDING_PRECISION)
     return battles_df.drop('Unnamed: 0', axis=1)
 
 
@@ -449,6 +450,7 @@ def get_pca_optimal_components(battles_df):
     df_numeric = get_numerical_dataset(battles_df)
     scaler = StandardScaler()
     df_scaled = scaler.fit_transform(df_numeric)
+    df_scaled = pd.DataFrame(df_scaled, columns=df_numeric.columns)
     pca = PCA().fit(df_scaled)  # Compute PCA
     cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
     n = np.argmax(cumulative_variance >= PCA_VARIENCE_THRESHOLD) + 1

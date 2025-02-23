@@ -1,4 +1,4 @@
-## DATELINE: 21/02 15:00
+## DATELINE: 25/02 15:00
 ### SALEH:
 - 2.1 Data Acquisition and 2.1.1 Data Structure in the article, add a graph for 2.1.1
 - 2.4.2 Deck Similarity - t-SNE and MDS
@@ -10,22 +10,25 @@
 
 ### YAGEL:
 - 2.2 Exploratory Data Analysis in the article (DAG + small subsection)
+- investigate DAG aftermeth
 - fix correlation thresholds consistency, there are 3 thresholds: 0.3,0.55,0.7, we need at most 2 so we need to discuss that
+-- YOUR GOAL IS TO REDUCE THE NUMBER OF THRESHOLDS FROM 3 TO 2, WITHIN THE MAIN NOTEBOOK WITH AS LOW AS POSSIBLE MODIFICATIONS
 - 2.4.3 Causal Model
 
 
 
-## DATELINE: 24/02 15:00
+## DATELINE: 27/02 15:00
 ### SALEH:
 - Finish MDS and t-SNE comprasion + add to article
 - Check how to insert MVD usage in code/article
 ### YAGEL:
-- continue with DAG aftermeth
+- Implement DAG aftermeth 
 - FP-growth algorithm
 - check the following path: handle_behavior - less outliers, more of target behavior,
      yagel's idea of avg elixer<2 or >6, validate win_rate for those decks
 ### RONI:
 - PCA: check the average data of the outliered subgraph and other subgraphs
+- PCA: continue with investigating the PCA table with ~33 features and use the shrinked data (currently not using)
 - Graph repressentation
 - DeepWalk
 - change pictures to their new picture in the article

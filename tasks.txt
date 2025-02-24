@@ -19,7 +19,6 @@
 
 ## DATELINE: 27/02 15:00
 ### SALEH:
-- Finish MDS and t-SNE comprasion + add to article
 - Check how to insert MVD usage in code/article
 ### YAGEL:
 - Implement DAG aftermeth 
@@ -27,8 +26,6 @@
 - check the following path: handle_behavior - less outliers, more of target behavior,
      yagel's idea of avg elixer<2 or >6, validate win_rate for those decks
 ### RONI:
-- PCA: check the average data of the outliered subgraph and other subgraphs
-- PCA: continue with investigating the PCA table with ~33 features and use the shrinked data (currently not using)
 - Graph repressentation
 - DeepWalk
 - change pictures to their new picture in the article

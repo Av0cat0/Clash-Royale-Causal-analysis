@@ -113,6 +113,8 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     - pd.DataFrame: The preprocessed dataset.
     """
 
+    # Initial Outliers Handling
+    battles_df = _initial_outliers_handling(battles_df)
     # Normalize features
     scaler = MinMaxScaler()
     features_to_normalize = ['average.startingTrophies', 'loser.startingTrophies', 'winner.startingTrophies',
@@ -165,6 +167,23 @@ def _compute_deck_strength(battles_df, card_win_rates):
         win_rates = card_ids.map(card_win_rates).fillna(0.5)  # Default win rate 50% if not seen
         deck_strength += win_rates * card_levels
     return deck_strength
+
+
+def _initial_outliers_handling(battles_df):
+    """
+    Handles initial outliers in the battle dataset, before feature engineering.
+
+    Parameters:
+    - battles_df (pd.DataFrame): The battle dataset.
+
+    Returns:
+    - pd.DataFrame: The cleaned dataset with initial outliers removed.
+    """
+    non_existing_trophy_values = battles_df['winner.trophyChange'].value_counts()
+    non_existing_trophy_indexs = non_existing_trophy_values[non_existing_trophy_values >= 20].index
+    battles_df = battles_df[battles_df['winner.trophyChange'].isin(non_existing_trophy_indexs)]
+
+    return battles_df
 
 
 def _count_winning_cards(row, prefix, winning_card_set):
@@ -338,8 +357,13 @@ def _feature_engineering(battles_df, winning_card_list_df):
     # factorized_mappings will save mappings of string columns into indexes in case we need to reverse the factorization
     # will use it later
     factorized_mappings = {}
+    unique_ids = pd.concat([battles_df["winner.tag"], battles_df["loser.tag"]]).unique()
+    id_mapping = {val: idx for idx, val in enumerate(unique_ids)}
+    battles_df["winner.tag"] = battles_df["winner.tag"].map(id_mapping)
+    battles_df["loser.tag"] = battles_df["loser.tag"].map(id_mapping)
+    factorized_mappings["winner.tag"] = id_mapping
     for col in battles_df.columns:
-        if battles_df[col].dtype == 'object':  
+        if battles_df[col].dtype == 'object' and col not in ['winner.tag', 'loser.tag']:  
             battles_df[col], unique_values = pd.factorize(battles_df[col])  
             factorized_mappings[col] = unique_values 
     winner_counts = battles_df["winner.tag"].value_counts()

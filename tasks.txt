@@ -14,6 +14,7 @@
 - fix correlation thresholds consistency, there are 3 thresholds: 0.3,0.55,0.7, we need at most 2 so we need to discuss that
 -- YOUR GOAL IS TO REDUCE THE NUMBER OF THRESHOLDS FROM 3 TO 2, WITHIN THE MAIN NOTEBOOK WITH AS LOW AS POSSIBLE MODIFICATIONS
 - 2.4.3 Causal Model
+- tasks 8 and 9 in data file
 
 
 
@@ -25,18 +26,16 @@
 - FP-growth algorithm
 - check the following path: handle_behavior - less outliers, more of target behavior,
      yagel's idea of avg elixer<2 or >6, validate win_rate for those decks
+- update new pictures in the article after the LAST touch
 ### RONI:
 - Graph repressentation
 - DeepWalk
 - change pictures to their new picture in the article
 
 
-# upcoming:
-**Please don't take a task from this task bucket, other tasks are important as well**
-data to fix tasks: 1 3 5 8 9 
-delete clash royale data and use only the id-name dataset (we don't have time to implements its usage)
+# upcoming: **Please don't take a task from this task bucket, other tasks are important as well**
+delete clash royale dataset and use only the id-name dataset (we don't have time to implements its usage)
 noise
 pruning
 simpson’s paradox
 pressent the project with canvas
-fix tables explaination in the beginning of the main notebook

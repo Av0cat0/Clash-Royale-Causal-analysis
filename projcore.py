@@ -117,9 +117,7 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     scaler = MinMaxScaler()
     features_to_normalize = ['average.startingTrophies', 'loser.startingTrophies', 'winner.startingTrophies',
                              'loser.trophyChange', 'winner.trophyChange']
-    battles_df[features_to_normalize] = scaler.fit_transform(battles_df[features_to_normalize])
-    features_to_normalize.remove('average.startingTrophies')
-    battles_df[features_to_normalize] = battles_df[features_to_normalize] + 1
+    battles_df[["normalized_" + feature for feature in features_to_normalize]] = scaler.fit_transform(battles_df[features_to_normalize]) + 1
 
     # One-hot encode categorical variables
     features_to_onehot = ['arena.id', 'gameMode.id']
@@ -346,13 +344,13 @@ def _feature_engineering(battles_df, winning_card_list_df):
             factorized_mappings[col] = unique_values 
     winner_counts = battles_df["winner.tag"].value_counts()
     loser_counts = battles_df["loser.tag"].value_counts()
-    battles_df["winner.count"] = battles_df["winner.tag"].map(winner_counts)
+    battles_df["winner.winning_count"] = battles_df["winner.tag"].map(winner_counts)
     battles_df["winner.losing_count"] = battles_df["winner.tag"].map(loser_counts).fillna(0)
-    battles_df["winner.total_games_for"] = battles_df["winner.count"] + battles_df["winner.losing_count"]
+    battles_df["winner.total_games_for"] = battles_df["winner.winning_count"] + battles_df["winner.losing_count"]
     battles_df["winner.win_lose_ratio"] = np.where(
     battles_df["winner.losing_count"] == 0,
     1.0,
-    battles_df["winner.count"] / battles_df["winner.total_games_for"]
+    battles_df["winner.winning_count"] / battles_df["winner.total_games_for"]
     )
     battles_df["winner.win_lose_ratio_Z_score"] = (battles_df["winner.win_lose_ratio"] - battles_df["winner.win_lose_ratio"].mean()) / battles_df["winner.win_lose_ratio"].std()
     winning_card_set = set(winning_card_list_df["card_id"])

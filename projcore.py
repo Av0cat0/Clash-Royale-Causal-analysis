@@ -406,6 +406,11 @@ def _feature_engineering(battles_df, winning_card_list_df):
                 card_stats[pair] = {'wins': 0, 'appearances': 0}
             card_stats[pair]['appearances'] += 1  
     card_win_rates = {pair: stats['wins'] / stats['appearances'] for pair, stats in card_stats.items()}
+    deck_counts = battles_df.groupby("winner.card_set").size().reset_index(name="total_games")
+    deck_wins = battles_df.groupby("winner.card_set")["winner.card_set"].count().reset_index(name="wins")
+    deck_stats = deck_counts.merge(deck_wins, on="winner.card_set")
+    deck_stats["win_rate"] = deck_stats["wins"] / deck_stats["total_games"]
+    battles_df = battles_df.merge(deck_stats[["winner.card_set", "win_rate"]], on="winner.card_set", how="left")
     battles_df = battles_df.round(ROUNDING_PRECISION)
     battles_df['winner.deck_weighted_strength'] = _compute_deck_strength(battles_df, card_win_rates)
     avg_elixir = battles_df["winner.elixir.average"].mean()
@@ -427,12 +432,12 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df["winner.synergy_score"] = battles_df.apply(_compute_synergy_score, axis=1)
     battles_df[scoring_features] = scaler.fit_transform(battles_df[scoring_features])
     battles_df["winner.deck_final_score"] = (
-        0.35 * battles_df["winner.deck_weighted_strength"] +
-        0.20 * battles_df["winner.elixir_score"] +
+        0.25 * battles_df["winner.win_rate"] +
+        0.25 * battles_df["winner.elixir_score"] +
         0.15 * (battles_df["winner.max_card_level"] + battles_df["winner.min_card_level"]) / 2 +
+        0.15 * battles_df["winner.synergy_score"] +
         0.10 * (1 - battles_df["winner.level_variance"]) +
-        0.10 * battles_df["winner.avg_card_level"] +
-        0.10 * battles_df["winner.synergy_score"]
+        0.10 * battles_df["winner.avg_card_level"] 
     )
     battles_df = battles_df.round(ROUNDING_PRECISION)
     return battles_df.drop('Unnamed: 0', axis=1)

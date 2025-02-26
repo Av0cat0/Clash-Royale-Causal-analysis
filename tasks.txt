@@ -1,12 +1,13 @@
 ## DATELINE: 25/02 15:00
 ### SALEH:
 - 2.1 Data Acquisition and 2.1.1 Data Structure in the article, add a graph for 2.1.1
-- 2.4.2 Deck Similarity - t-SNE and MDS
+- 2.4.2 Deck Similarity - MDS
 -- instead of appearances, check other features and create a subset of features to analyse with MDS/t-SNE, such that will help us conclude conclusions about the high win-rate clusters.
      use yagel's DAGs and the subset to check intreseting OR related features, and create a subplot of all inspected features (we will downsize it later)
 - explain why you used hamming/cosine/jaccerd metrices in the article 
 - combine plots of MDS/t-sne algorithms to 2 sublplots, each for 1 algorithm which shows all the metrices
 - Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
+
 
 ### YAGEL:
 - 2.2 Exploratory Data Analysis in the article (DAG + small subsection)
@@ -15,6 +16,11 @@
 -- YOUR GOAL IS TO REDUCE THE NUMBER OF THRESHOLDS FROM 3 TO 2, WITHIN THE MAIN NOTEBOOK WITH AS LOW AS POSSIBLE MODIFICATIONS
 - 2.4.3 Causal Model
 - tasks 8 and 9 in data file
+
+### RONI:
+- write a paragraph about why we use hamming and not cosine and jaccord, think computanally and case-wised
+- why MDS and not t-sne 
+- check saleh paragraph
 
 
 

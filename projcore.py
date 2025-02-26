@@ -124,7 +124,7 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     # One-hot encode categorical variables
     features_to_onehot = ['arena.id', 'gameMode.id']
     for feature in features_to_onehot:
-        battles_df[feature] = pd.get_dummies(battles_df[feature]).idxmax(axis=1).astype('category').cat.codes
+        battles_df.loc[:, feature] = pd.get_dummies(battles_df[feature]).idxmax(axis=1).astype('category').cat.codes
 
     #Imputation
     for feature in battles_df.columns:
@@ -406,10 +406,11 @@ def _feature_engineering(battles_df, winning_card_list_df):
                 card_stats[pair] = {'wins': 0, 'appearances': 0}
             card_stats[pair]['appearances'] += 1  
     card_win_rates = {pair: stats['wins'] / stats['appearances'] for pair, stats in card_stats.items()}
-    deck_counts = battles_df["winner.card_set"].value_counts()
-    deck_wins = battles_df.groupby("winner.card_set")["winner.card_set"].count()
-    win_rate_dict = (deck_wins / deck_counts).to_dict()
-    battles_df["winner.win_rate"] = battles_df["winner.card_set"].map(win_rate_dict)
+    deck_wins = battles_df.groupby("winner.card_set").size()
+    deck_losses = battles_df.groupby("loser.card_set").size()
+    deck_total_games = deck_wins.add(deck_losses, fill_value=0)
+    deck_win_rate = (deck_wins / deck_total_games).fillna(0)
+    battles_df["winner.win_rate"] = battles_df["winner.card_set"].map(deck_win_rate)
     battles_df['winner.high_win_rate']=battles_df['winner.win_rate']>0.75
     battles_df = battles_df.round(ROUNDING_PRECISION)
     battles_df['winner.deck_weighted_strength'] = _compute_deck_strength(battles_df, card_win_rates)

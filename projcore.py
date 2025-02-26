@@ -406,11 +406,10 @@ def _feature_engineering(battles_df, winning_card_list_df):
                 card_stats[pair] = {'wins': 0, 'appearances': 0}
             card_stats[pair]['appearances'] += 1  
     card_win_rates = {pair: stats['wins'] / stats['appearances'] for pair, stats in card_stats.items()}
-    deck_counts = battles_df.groupby("winner.card_set").size().reset_index(name="total_games")
-    deck_wins = battles_df.groupby("winner.card_set")["winner.card_set"].count().reset_index(name="wins")
-    deck_stats = deck_counts.merge(deck_wins, on="winner.card_set")
-    deck_stats["win_rate"] = deck_stats["wins"] / deck_stats["total_games"]
-    battles_df = battles_df.merge(deck_stats[["winner.card_set", "win_rate"]], on="winner.card_set", how="left")
+    deck_counts = battles_df["winner.card_set"].value_counts()
+    deck_wins = battles_df.groupby("winner.card_set")["winner.card_set"].count()
+    win_rate_dict = (deck_wins / deck_counts).to_dict()
+    battles_df["winner.win_rate"] = battles_df["winner.card_set"].map(win_rate_dict)
     battles_df = battles_df.round(ROUNDING_PRECISION)
     battles_df['winner.deck_weighted_strength'] = _compute_deck_strength(battles_df, card_win_rates)
     avg_elixir = battles_df["winner.elixir.average"].mean()

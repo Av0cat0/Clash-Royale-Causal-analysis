@@ -410,6 +410,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
     deck_wins = battles_df.groupby("winner.card_set")["winner.card_set"].count()
     win_rate_dict = (deck_wins / deck_counts).to_dict()
     battles_df["winner.win_rate"] = battles_df["winner.card_set"].map(win_rate_dict)
+    battles_df['winner.high_win_rate']=battles_df['winner.win_rate']>0.75
     battles_df = battles_df.round(ROUNDING_PRECISION)
     battles_df['winner.deck_weighted_strength'] = _compute_deck_strength(battles_df, card_win_rates)
     avg_elixir = battles_df["winner.elixir.average"].mean()

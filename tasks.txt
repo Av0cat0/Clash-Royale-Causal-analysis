@@ -4,7 +4,6 @@
 - 2.4.2 Deck Similarity - MDS
 - instead of appearances, check other features and create a subset of features to analyse with MDS, such that will help us conclude conclusions about the high win-rate clusters.
 - Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
-- delete clash royale dataset and use only the id-name dataset (we don't have time to implements its usage)
 
 
 ### YAGEL:

@@ -202,8 +202,8 @@ def _post_engineering_outliers_handling(battles_df, deck_total_games):
     Returns:
     - pd.DataFrame: The cleaned dataset with outliers and noise removed.
     """
-    battles_df = battles_df[(battles_df["winner_card_set"].map(deck_total_games) >= 5) |
-                             (battles_df["loser_card_set"].map(deck_total_games) >= 5)]
+    battles_df = battles_df[(battles_df["winner.card_set"].map(deck_total_games) >= 5) |
+                             (battles_df["loser.card_set"].map(deck_total_games) >= 5)]
     return battles_df.drop('Unnamed: 0', axis=1)
 
 
@@ -510,52 +510,53 @@ def get_pca_optimal_components(battles_df):
     return df_scaled, n
 
 
-def get_t_sne(battles_df, dest_col, preplexity = 30, learning_rate=200, n_iter=1000):
-    """
-    Computes 3D t-SNE embeddings for visualization.
+# def get_t_sne(battles_df, dest_col, preplexity = 30, learning_rate=200, n_iter=1000):
+#     """
+#     Computes 3D t-SNE embeddings for visualization.
 
-    Parameters:
-    - battles_df (pd.DataFrame): The battle dataset.
-    - dest_col (str): Column used for color coding.
-    - perplexity (int): t-SNE parameter controlling neighborhood size.
-    - learning_rate (int): Step size for optimization.
-    - n_iter (int): Number of iterations.
+#     Parameters:
+#     - battles_df (pd.DataFrame): The battle dataset.
+#     - dest_col (str): Column used for color coding.
+#     - perplexity (int): t-SNE parameter controlling neighborhood size.
+#     - learning_rate (int): Step size for optimization.
+#     - n_iter (int): Number of iterations.
 
-    Returns:
-    - pd.DataFrame: DataFrame containing t-SNE embeddings and cluster labels.
-    """
-    numerical_features = battles_df.select_dtypes(include=[np.number])
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(numerical_features)
-    tsne_3d = TSNE(n_components=3, perplexity=preplexity, learning_rate=learning_rate, n_iter=n_iter)
-    X_embedded_3d = tsne_3d.fit_transform(X_scaled)
-    battles_df_tsne_3d = pd.DataFrame(X_embedded_3d, columns=['TSNE1', 'TSNE2', 'TSNE3'])
-    battles_df_tsne_3d['Cluster'] = battles_df[dest_col]
-    return battles_df_tsne_3d
+#     Returns:
+#     - pd.DataFrame: DataFrame containing t-SNE embeddings and cluster labels.
+#     """
+#     numerical_features = battles_df.select_dtypes(include=[np.number])
+#     scaler = StandardScaler()
+#     X_scaled = scaler.fit_transform(numerical_features)
+#     tsne_3d = TSNE(n_components=3, perplexity=preplexity, learning_rate=learning_rate, n_iter=n_iter)
+#     X_embedded_3d = tsne_3d.fit_transform(X_scaled)
+#     battles_df_tsne_3d = pd.DataFrame(X_embedded_3d, columns=['TSNE1', 'TSNE2', 'TSNE3'])
+#     battles_df_tsne_3d['Cluster'] = battles_df[dest_col]
+#     return battles_df_tsne_3d
 
 
-def plot_t_sne_as_3d_scatter(battles_df_tsne_3d, dest_col):
-    """
-    Plots a 3D scatter plot of t-SNE embeddings to visualize clusters in the battle dataset.
 
-    Parameters:
-    - battles_df_tsne_3d (pd.DataFrame): A DataFrame containing t-SNE embeddings ('TSNE1', 'TSNE2', 'TSNE3') 
-      and a 'Cluster' column indicating group assignments.
-    - dest_col (str): The name of the column used for color coding in the visualization.
+# def plot_t_sne_as_3d_scatter(battles_df_tsne_3d, dest_col):
+#     """
+#     Plots a 3D scatter plot of t-SNE embeddings to visualize clusters in the battle dataset.
 
-    Returns:
-    - None: Displays a 3D scatter plot of t-SNE embeddings.
-    """
-    fig = plt.figure(figsize=(10, 7))
-    ax = fig.add_subplot(111, projection='3d')
-    sc = ax.scatter(
-        battles_df_tsne_3d['TSNE1'], battles_df_tsne_3d['TSNE2'], battles_df_tsne_3d['TSNE3'], 
-        c=battles_df_tsne_3d['Cluster'], cmap='viridis', alpha=0.7
-    )
-    ax.set_title("3D t-SNE Visualization of Battle Data")
-    ax.set_xlabel("t-SNE Component 1")
-    ax.set_ylabel("t-SNE Component 2")
-    ax.set_zlabel("t-SNE Component 3")
-    cbar = plt.colorbar(sc, ax=ax, shrink=0.6)
-    cbar.set_label(dest_col)
-    plt.show()
+#     Parameters:
+#     - battles_df_tsne_3d (pd.DataFrame): A DataFrame containing t-SNE embeddings ('TSNE1', 'TSNE2', 'TSNE3') 
+#       and a 'Cluster' column indicating group assignments.
+#     - dest_col (str): The name of the column used for color coding in the visualization.
+
+#     Returns:
+#     - None: Displays a 3D scatter plot of t-SNE embeddings.
+#     """
+#     fig = plt.figure(figsize=(10, 7))
+#     ax = fig.add_subplot(111, projection='3d')
+#     sc = ax.scatter(
+#         battles_df_tsne_3d['TSNE1'], battles_df_tsne_3d['TSNE2'], battles_df_tsne_3d['TSNE3'], 
+#         c=battles_df_tsne_3d['Cluster'], cmap='viridis', alpha=0.7
+#     )
+#     ax.set_title("3D t-SNE Visualization of Battle Data")
+#     ax.set_xlabel("t-SNE Component 1")
+#     ax.set_ylabel("t-SNE Component 2")
+#     ax.set_zlabel("t-SNE Component 3")
+#     cbar = plt.colorbar(sc, ax=ax, shrink=0.6)
+#     cbar.set_label(dest_col)
+#     plt.show()

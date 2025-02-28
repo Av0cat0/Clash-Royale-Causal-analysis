@@ -1,10 +1,10 @@
-## Main
+## Main quests
 ### SALEH:
 - 2.4.2 Deck Similarity - MDS
-- instead of appearances, check other features and create a subset of features to analyse with MDS, such that will help us conclude conclusions about the high win-rate clusters.
-- Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
-- modify with Roni the paragraph for paper
-- combine with Roni the code from project-saleh to visualizations
+- (put aside) Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
+1) think of how to add results from MDS section to impact and recommandation section
+2 - in parralel to 1) read paper (בזריז כזה)
+3) FP-growth algorithm
 
 
 ### YAGEL:
@@ -14,19 +14,15 @@
 - tasks 8 and 9 in data file
 
 ### RONI:
-- noise for MDS through PCA
+- combine the code from project-saleh to visualizations
+- Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
 - edit data structure image
 - add PCA final table resolutions to article
-- Graph repressentation
-- DeepWalk
+- make feature_processing more efficient
 
-## Secondary
-### SALEH:
-
-
+## Secondary quests
 ### YAGEL:
 - update new pictures in the article after the LAST touch
-- FP-growth algorithm
 - check pre and post feature outlier handling
 
 ### RONI:

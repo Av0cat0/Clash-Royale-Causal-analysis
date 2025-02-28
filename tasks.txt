@@ -15,6 +15,7 @@
 - tasks 8 and 9 in data file
 
 ### RONI:
+- noise for MDS through PCA
 - Graph repressentation
 - DeepWalk
 
@@ -23,14 +24,14 @@
 - FP-growth algorithm
 
 ### YAGEL:
-- check the following path: handle_behavior - less outliers, more of target behavior,
-     yagel's idea of avg elixer<2 or >6, validate win_rate for those decks
 - update new pictures in the article after the LAST touch
+- check pre and post feature outlier handling
 
 ### RONI:
 - change pictures to their new picture in the article
+-
 
 
 # upcoming: **Please don't take a task from this task bucket, other tasks are important as well**
-noise
+
 pressent the project with canvas

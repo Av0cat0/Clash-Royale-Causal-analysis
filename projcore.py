@@ -114,7 +114,8 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     """
 
     # Initial Outliers Handling
-    battles_df = _initial_outliers_handling(battles_df)
+    battles_df = _pre_engineering_outliers_handling(battles_df)
+
     # Normalize features
     scaler = MinMaxScaler()
     features_to_normalize = ['average.startingTrophies', 'loser.startingTrophies', 'winner.startingTrophies',
@@ -122,7 +123,7 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     battles_df[["normalized_" + feature for feature in features_to_normalize]] = scaler.fit_transform(battles_df[features_to_normalize]) + 1
 
     # One-hot encode categorical variables
-    features_to_onehot = ['arena.id', 'gameMode.id']
+    features_to_onehot = ['gameMode.id']
     for feature in features_to_onehot:
         battles_df.loc[:, feature] = pd.get_dummies(battles_df[feature]).idxmax(axis=1).astype('category').cat.codes
 
@@ -144,6 +145,7 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     battles_df.drop(columns=features_to_remove, inplace=True)
 
     return battles_df
+
 
 
 def _compute_deck_strength(battles_df, card_win_rates):
@@ -169,9 +171,9 @@ def _compute_deck_strength(battles_df, card_win_rates):
     return deck_strength
 
 
-def _initial_outliers_handling(battles_df):
+def _pre_engineering_outliers_handling(battles_df):
     """
-    Handles initial outliers in the battle dataset, before feature engineering.
+    Handles initial outliers and noise in the battle dataset, before feature engineering.
 
     Parameters:
     - battles_df (pd.DataFrame): The battle dataset.
@@ -182,8 +184,27 @@ def _initial_outliers_handling(battles_df):
     non_existing_trophy_values = battles_df['winner.trophyChange'].value_counts()
     non_existing_trophy_indexs = non_existing_trophy_values[non_existing_trophy_values >= 20].index
     battles_df = battles_df[battles_df['winner.trophyChange'].isin(non_existing_trophy_indexs)]
+    battles_df = battles_df[(battles_df['winner.elixir.average'] >= 2) &
+                             (battles_df['winner.elixir.average'] <= 5.5) &
+                             (battles_df['gameMode.id'] != 72000023) & # removing noise
+                             (battles_df['arena.id'] == 54000050)] # last arena, the only one that matters
 
     return battles_df
+
+
+def _post_engineering_outliers_handling(battles_df, deck_total_games):
+    """
+    Handles outliers and noise in the battle dataset after feature engineering.
+
+    Parameters:
+    - battles_df (pd.DataFrame): The battle dataset.
+
+    Returns:
+    - pd.DataFrame: The cleaned dataset with outliers and noise removed.
+    """
+    battles_df = battles_df[(battles_df["winner_card_set"].map(deck_total_games) >= 5) |
+                             (battles_df["loser_card_set"].map(deck_total_games) >= 5)]
+    return battles_df.drop('Unnamed: 0', axis=1)
 
 
 def _count_winning_cards(row, prefix, winning_card_set):
@@ -349,10 +370,6 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df['winner_loser.elixir_advantage'] = battles_df['winner.elixir.average'].gt(battles_df['loser.elixir.average']).astype(int)
     battles_df['winner.balanced_deck'] = ((battles_df['winner.troop.count'] > 2) & (battles_df['winner.spell.count'] > 1) & (battles_df['winner.structure.count'] > 0)).astype(int)
     battles_df['loser.balanced_deck'] = ((battles_df['loser.troop.count'] > 2) & (battles_df['loser.spell.count'] > 1) & (battles_df['loser.structure.count'] > 0)).astype(int)
-    arena_mean = battles_df.groupby('arena.id')['winner.totalcard.level'].transform('mean')
-    battles_df['winner.underleveled'] = (battles_df['winner.totalcard.level'] < arena_mean).astype(int)
-    arena_mean_loser = battles_df.groupby('arena.id')['loser.totalcard.level'].transform('mean')
-    battles_df['loser.underleveled'] = (battles_df['loser.totalcard.level'] < arena_mean_loser).astype(int)
     battles_df['winner.crown_dominance'] = battles_df['winner.crowns'].ge(2).astype(int)
     # factorized_mappings will save mappings of string columns into indexes in case we need to reverse the factorization
     # will use it later
@@ -441,7 +458,9 @@ def _feature_engineering(battles_df, winning_card_list_df):
         0.10 * battles_df["winner.avg_card_level"] 
     )
     battles_df = battles_df.round(ROUNDING_PRECISION)
-    return battles_df.drop('Unnamed: 0', axis=1)
+    # Post engineering outliers and noise handling
+    battles_df = _post_engineering_outliers_handling(battles_df, deck_total_games)
+    return battles_df
 
 
 def get_numerical_dataset(battles_df):

@@ -114,7 +114,8 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     """
 
     # Initial Outliers Handling
-    battles_df = _initial_outliers_handling(battles_df)
+    battles_df = _pre_engineering_outliers_handling(battles_df)
+
     # Normalize features
     scaler = MinMaxScaler()
     features_to_normalize = ['average.startingTrophies', 'loser.startingTrophies', 'winner.startingTrophies',
@@ -122,7 +123,7 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     battles_df[["normalized_" + feature for feature in features_to_normalize]] = scaler.fit_transform(battles_df[features_to_normalize]) + 1
 
     # One-hot encode categorical variables
-    features_to_onehot = ['arena.id', 'gameMode.id']
+    features_to_onehot = ['gameMode.id']
     for feature in features_to_onehot:
         battles_df.loc[:, feature] = pd.get_dummies(battles_df[feature]).idxmax(axis=1).astype('category').cat.codes
 
@@ -144,6 +145,7 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     battles_df.drop(columns=features_to_remove, inplace=True)
 
     return battles_df
+
 
 
 def _compute_deck_strength(battles_df, card_win_rates):
@@ -169,9 +171,9 @@ def _compute_deck_strength(battles_df, card_win_rates):
     return deck_strength
 
 
-def _initial_outliers_handling(battles_df):
+def _pre_engineering_outliers_handling(battles_df):
     """
-    Handles initial outliers in the battle dataset, before feature engineering.
+    Handles initial outliers and noise in the battle dataset, before feature engineering.
 
     Parameters:
     - battles_df (pd.DataFrame): The battle dataset.
@@ -182,8 +184,27 @@ def _initial_outliers_handling(battles_df):
     non_existing_trophy_values = battles_df['winner.trophyChange'].value_counts()
     non_existing_trophy_indexs = non_existing_trophy_values[non_existing_trophy_values >= 20].index
     battles_df = battles_df[battles_df['winner.trophyChange'].isin(non_existing_trophy_indexs)]
+    battles_df = battles_df[(battles_df['winner.elixir.average'] >= 2) &
+                             (battles_df['winner.elixir.average'] <= 5.5) &
+                             (battles_df['gameMode.id'] != 72000023) & # removing noise
+                             (battles_df['arena.id'] == 54000050)] # last arena, the only one that matters
 
     return battles_df
+
+
+def _post_engineering_outliers_handling(battles_df, deck_total_games):
+    """
+    Handles outliers and noise in the battle dataset after feature engineering.
+
+    Parameters:
+    - battles_df (pd.DataFrame): The battle dataset.
+
+    Returns:
+    - pd.DataFrame: The cleaned dataset with outliers and noise removed.
+    """
+    battles_df = battles_df[(battles_df["winner.card_set"].map(deck_total_games) >= 5) |
+                             (battles_df["loser.card_set"].map(deck_total_games) >= 5)]
+    return battles_df.drop('Unnamed: 0', axis=1)
 
 
 def _count_winning_cards(row, prefix, winning_card_set):
@@ -349,10 +370,6 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df['winner_loser.elixir_advantage'] = battles_df['winner.elixir.average'].gt(battles_df['loser.elixir.average']).astype(int)
     battles_df['winner.balanced_deck'] = ((battles_df['winner.troop.count'] > 2) & (battles_df['winner.spell.count'] > 1) & (battles_df['winner.structure.count'] > 0)).astype(int)
     battles_df['loser.balanced_deck'] = ((battles_df['loser.troop.count'] > 2) & (battles_df['loser.spell.count'] > 1) & (battles_df['loser.structure.count'] > 0)).astype(int)
-    arena_mean = battles_df.groupby('arena.id')['winner.totalcard.level'].transform('mean')
-    battles_df['winner.underleveled'] = (battles_df['winner.totalcard.level'] < arena_mean).astype(int)
-    arena_mean_loser = battles_df.groupby('arena.id')['loser.totalcard.level'].transform('mean')
-    battles_df['loser.underleveled'] = (battles_df['loser.totalcard.level'] < arena_mean_loser).astype(int)
     battles_df['winner.crown_dominance'] = battles_df['winner.crowns'].ge(2).astype(int)
     # factorized_mappings will save mappings of string columns into indexes in case we need to reverse the factorization
     # will use it later
@@ -441,7 +458,9 @@ def _feature_engineering(battles_df, winning_card_list_df):
         0.10 * battles_df["winner.avg_card_level"] 
     )
     battles_df = battles_df.round(ROUNDING_PRECISION)
-    return battles_df.drop('Unnamed: 0', axis=1)
+    # Post engineering outliers and noise handling
+    battles_df = _post_engineering_outliers_handling(battles_df, deck_total_games)
+    return battles_df
 
 
 def get_numerical_dataset(battles_df):
@@ -491,52 +510,53 @@ def get_pca_optimal_components(battles_df):
     return df_scaled, n
 
 
-def get_t_sne(battles_df, dest_col, preplexity = 30, learning_rate=200, n_iter=1000):
-    """
-    Computes 3D t-SNE embeddings for visualization.
+# def get_t_sne(battles_df, dest_col, preplexity = 30, learning_rate=200, n_iter=1000):
+#     """
+#     Computes 3D t-SNE embeddings for visualization.
 
-    Parameters:
-    - battles_df (pd.DataFrame): The battle dataset.
-    - dest_col (str): Column used for color coding.
-    - perplexity (int): t-SNE parameter controlling neighborhood size.
-    - learning_rate (int): Step size for optimization.
-    - n_iter (int): Number of iterations.
+#     Parameters:
+#     - battles_df (pd.DataFrame): The battle dataset.
+#     - dest_col (str): Column used for color coding.
+#     - perplexity (int): t-SNE parameter controlling neighborhood size.
+#     - learning_rate (int): Step size for optimization.
+#     - n_iter (int): Number of iterations.
 
-    Returns:
-    - pd.DataFrame: DataFrame containing t-SNE embeddings and cluster labels.
-    """
-    numerical_features = battles_df.select_dtypes(include=[np.number])
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(numerical_features)
-    tsne_3d = TSNE(n_components=3, perplexity=preplexity, learning_rate=learning_rate, n_iter=n_iter)
-    X_embedded_3d = tsne_3d.fit_transform(X_scaled)
-    battles_df_tsne_3d = pd.DataFrame(X_embedded_3d, columns=['TSNE1', 'TSNE2', 'TSNE3'])
-    battles_df_tsne_3d['Cluster'] = battles_df[dest_col]
-    return battles_df_tsne_3d
+#     Returns:
+#     - pd.DataFrame: DataFrame containing t-SNE embeddings and cluster labels.
+#     """
+#     numerical_features = battles_df.select_dtypes(include=[np.number])
+#     scaler = StandardScaler()
+#     X_scaled = scaler.fit_transform(numerical_features)
+#     tsne_3d = TSNE(n_components=3, perplexity=preplexity, learning_rate=learning_rate, n_iter=n_iter)
+#     X_embedded_3d = tsne_3d.fit_transform(X_scaled)
+#     battles_df_tsne_3d = pd.DataFrame(X_embedded_3d, columns=['TSNE1', 'TSNE2', 'TSNE3'])
+#     battles_df_tsne_3d['Cluster'] = battles_df[dest_col]
+#     return battles_df_tsne_3d
 
 
-def plot_t_sne_as_3d_scatter(battles_df_tsne_3d, dest_col):
-    """
-    Plots a 3D scatter plot of t-SNE embeddings to visualize clusters in the battle dataset.
 
-    Parameters:
-    - battles_df_tsne_3d (pd.DataFrame): A DataFrame containing t-SNE embeddings ('TSNE1', 'TSNE2', 'TSNE3') 
-      and a 'Cluster' column indicating group assignments.
-    - dest_col (str): The name of the column used for color coding in the visualization.
+# def plot_t_sne_as_3d_scatter(battles_df_tsne_3d, dest_col):
+#     """
+#     Plots a 3D scatter plot of t-SNE embeddings to visualize clusters in the battle dataset.
 
-    Returns:
-    - None: Displays a 3D scatter plot of t-SNE embeddings.
-    """
-    fig = plt.figure(figsize=(10, 7))
-    ax = fig.add_subplot(111, projection='3d')
-    sc = ax.scatter(
-        battles_df_tsne_3d['TSNE1'], battles_df_tsne_3d['TSNE2'], battles_df_tsne_3d['TSNE3'], 
-        c=battles_df_tsne_3d['Cluster'], cmap='viridis', alpha=0.7
-    )
-    ax.set_title("3D t-SNE Visualization of Battle Data")
-    ax.set_xlabel("t-SNE Component 1")
-    ax.set_ylabel("t-SNE Component 2")
-    ax.set_zlabel("t-SNE Component 3")
-    cbar = plt.colorbar(sc, ax=ax, shrink=0.6)
-    cbar.set_label(dest_col)
-    plt.show()
+#     Parameters:
+#     - battles_df_tsne_3d (pd.DataFrame): A DataFrame containing t-SNE embeddings ('TSNE1', 'TSNE2', 'TSNE3') 
+#       and a 'Cluster' column indicating group assignments.
+#     - dest_col (str): The name of the column used for color coding in the visualization.
+
+#     Returns:
+#     - None: Displays a 3D scatter plot of t-SNE embeddings.
+#     """
+#     fig = plt.figure(figsize=(10, 7))
+#     ax = fig.add_subplot(111, projection='3d')
+#     sc = ax.scatter(
+#         battles_df_tsne_3d['TSNE1'], battles_df_tsne_3d['TSNE2'], battles_df_tsne_3d['TSNE3'], 
+#         c=battles_df_tsne_3d['Cluster'], cmap='viridis', alpha=0.7
+#     )
+#     ax.set_title("3D t-SNE Visualization of Battle Data")
+#     ax.set_xlabel("t-SNE Component 1")
+#     ax.set_ylabel("t-SNE Component 2")
+#     ax.set_zlabel("t-SNE Component 3")
+#     cbar = plt.colorbar(sc, ax=ax, shrink=0.6)
+#     cbar.set_label(dest_col)
+#     plt.show()

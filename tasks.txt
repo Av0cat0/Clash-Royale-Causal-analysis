@@ -1,6 +1,5 @@
 ## Main
 ### SALEH:
-- 2.1 Data Acquisition and 2.1.1 Data Structure in the article, add a graph for 2.1.1
 - 2.4.2 Deck Similarity - MDS
 - instead of appearances, check other features and create a subset of features to analyse with MDS, such that will help us conclude conclusions about the high win-rate clusters.
 - Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
@@ -15,22 +14,24 @@
 - tasks 8 and 9 in data file
 
 ### RONI:
+- noise for MDS through PCA
+- edit data structure image
+- add PCA final table resolutions to article
 - Graph repressentation
 - DeepWalk
 
 ## Secondary
 ### SALEH:
-- FP-growth algorithm
+
 
 ### YAGEL:
-- check the following path: handle_behavior - less outliers, more of target behavior,
-     yagel's idea of avg elixer<2 or >6, validate win_rate for those decks
 - update new pictures in the article after the LAST touch
+- FP-growth algorithm
+- check pre and post feature outlier handling
 
 ### RONI:
 - change pictures to their new picture in the article
 
 
 # upcoming: **Please don't take a task from this task bucket, other tasks are important as well**
-noise
 pressent the project with canvas

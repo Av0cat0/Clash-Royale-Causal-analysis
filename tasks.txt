@@ -1,45 +1,36 @@
-## DATELINE: 25/02 15:00
+## Main
 ### SALEH:
 - 2.1 Data Acquisition and 2.1.1 Data Structure in the article, add a graph for 2.1.1
 - 2.4.2 Deck Similarity - MDS
 - instead of appearances, check other features and create a subset of features to analyse with MDS, such that will help us conclude conclusions about the high win-rate clusters.
 - Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
-- delete clash royale dataset and use only the id-name dataset (we don't have time to implements its usage)
+- modify with Roni the paragraph for paper
+- combine with Roni the code from project-saleh to visualizations
 
 
 ### YAGEL:
-- 2.2 Exploratory Data Analysis in the article (DAG + small subsection)
 - investigate DAG aftermeth
-- fix correlation thresholds consistency, there are 3 thresholds: 0.3,0.55,0.7, we need at most 2 so we need to discuss that
--- YOUR GOAL IS TO REDUCE THE NUMBER OF THRESHOLDS FROM 3 TO 2, WITHIN THE MAIN NOTEBOOK WITH AS LOW AS POSSIBLE MODIFICATIONS
+- fix correlation thresholds consistency, there are 3 thresholds: 0.3,0.55,0.7, we need at most 2 so we need to discuss that YOUR GOAL IS TO REDUCE THE NUMBER OF THRESHOLDS FROM 3 TO 2, WITHIN THE MAIN NOTEBOOK WITH AS LOW AS POSSIBLE MODIFICATIONS
 - 2.4.3 Causal Model
 - tasks 8 and 9 in data file
 
 ### RONI:
-- write a paragraph about why we use hamming and not cosine and jaccord, think computanally and case-wised
-- add an explaination of the sampling formula
-- why MDS and not t-sne 
-- check saleh paragraph
+- Graph repressentation
+- DeepWalk
 
-
-
-## DATELINE: 27/02 15:00
+## Secondary
 ### SALEH:
+- FP-growth algorithm
 
 ### YAGEL:
-- Implement DAG aftermeth 
-- FP-growth algorithm
 - check the following path: handle_behavior - less outliers, more of target behavior,
      yagel's idea of avg elixer<2 or >6, validate win_rate for those decks
 - update new pictures in the article after the LAST touch
+
 ### RONI:
-- Graph repressentation
-- DeepWalk
 - change pictures to their new picture in the article
 
 
 # upcoming: **Please don't take a task from this task bucket, other tasks are important as well**
 noise
-pruning
-simpson’s paradox
 pressent the project with canvas

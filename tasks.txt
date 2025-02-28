@@ -15,7 +15,6 @@
 - tasks 8 and 9 in data file
 
 ### RONI:
-- write a paragraph about why we use hamming and not cosine and jaccord, think computanally and case-wised
 - add an explaination of the sampling formula
 - why MDS and not t-sne 
 - check saleh paragraph

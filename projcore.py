@@ -510,6 +510,26 @@ def get_pca_optimal_components(battles_df):
     return df_scaled, n
 
 
+def decks_to_sparse_matrix(deck_col, card_to_index, unique_cards_len):
+    """
+    Converts a Pandas Series of decks into a sparse matrix representation.
+
+    Parameters:
+    - deck_col (pd.Series): A column where each entry is a tuple/list of 8 card IDs.
+    - card_to_index (dict): A dictionary mapping card IDs to unique indexes.
+    - unique_cards_len (int): The total number of unique cards (size of the sparse vector).
+
+    Returns:
+    - np.array: A 2D NumPy array where each row represents a deck as a sparse binary vector.
+    """
+    sparse_matrix = np.zeros((len(deck_col), unique_cards_len), dtype=int)
+    for i, deck in enumerate(deck_col):
+        for card in deck:
+            sparse_matrix[i, card_to_index[card]] = 1
+    return sparse_matrix
+
+
+
 # def get_t_sne(battles_df, dest_col, preplexity = 30, learning_rate=200, n_iter=1000):
 #     """
 #     Computes 3D t-SNE embeddings for visualization.

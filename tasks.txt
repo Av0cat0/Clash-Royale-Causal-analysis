@@ -1,7 +1,6 @@
 ## Main quests
 ### SALEH:
 - 2.4.2 Deck Similarity - MDS
-- (put aside) Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
 1) think of how to add results from MDS section to impact and recommandation section
 2 - in parralel to 1) read paper (בזריז כזה)
 3) ADD AN EXPLAINATION ON THE SUB PLOT OF MDS FEATURES, CONSIDER THE DENSED AREA ON THE RIGHT, CONSIDER HOW FINAL SCORE LEFT REGION ALMOST DOESN'T HAS BLUE POINTS AT ALL, ELABORATE SOME HIRTUTIM

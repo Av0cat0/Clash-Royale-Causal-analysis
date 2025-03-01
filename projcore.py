@@ -295,28 +295,29 @@ def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=-1)
     return df
 
 
-def _elixir_score(elixir_value, lower_bound, upper_bound):
+def _elixir_score(elixir_values, lower_bound, upper_bound):
     """
     Computes an elixir efficiency score based on how close the elixir value is to the optimal range.
     The score follows these rules:
-    - If `elixir_value` is within [lower_bound, upper_bound], it gets a perfect score of 1.
-    - If `elixir_value` is outside the range, it gets penalized based on its distance from the range.
+    - If the elixir value is within [lower_bound, upper_bound], it gets a perfect score of 1.
+    - If the elixir value is outside the range, it gets penalized based on its distance from the range.
     - The penalty follows an exponential decay function exp(-distance), meaning:
         - Small deviations receive a mild penalty.
         - Large deviations are penalized heavily.
 
     Parameters:
-    - elixir_value (float): The player's average elixir cost in the battle.
+    - elixir_values (pd.series): The table's column (winner's or loser's) of average elixir cost in the battle.
     - lower_bound (float): The lower threshold for an optimal elixir value.
     - upper_bound (float): The upper threshold for an optimal elixir value.
 
     Returns:
-    - float: A score between (0,1], where 1 means the elixir cost is optimal.
+    - A score column between (0,1], where 1 means the elixir cost is optimal.
     """
-    if lower_bound <= elixir_value <= upper_bound:
-        return 1 
-    distance = min(abs(elixir_value - lower_bound), abs(elixir_value - upper_bound))
-    return np.exp(-distance)  # Exponential decay to penalize further distances
+    within_range = (elixir_values >= lower_bound) & (elixir_values <= upper_bound)
+    distance = np.minimum(np.abs(elixir_values - lower_bound), np.abs(elixir_values - upper_bound))
+    scores = np.exp(-distance)
+    scores[within_range] = 1  
+    return scores
 
 
 def _feature_engineering(battles_df, winning_card_list_df):
@@ -435,8 +436,8 @@ def _feature_engineering(battles_df, winning_card_list_df):
     epsilon_zero = 0.2
     elixir_lower_bound = avg_elixir - epsilon_zero
     elixir_upper_bound = avg_elixir + epsilon_zero
-    battles_df["winner.elixir_score"] = battles_df["winner.elixir.average"].apply(lambda x: _elixir_score(x, elixir_lower_bound, elixir_upper_bound))
-    battles_df["loser.elixir_score"] = battles_df["loser.elixir.average"].apply(lambda x: _elixir_score(x, elixir_lower_bound, elixir_upper_bound))
+    battles_df["winner.elixir_score"] = _elixir_score(battles_df["winner.elixir.average"].values, elixir_lower_bound, elixir_upper_bound)
+    battles_df["loser.elixir_score"] = _elixir_score(battles_df["loser.elixir.average"].values, elixir_lower_bound, elixir_upper_bound)
     scoring_features = [
     "winner.deck_weighted_strength",
     "winner.avg_card_level",

@@ -10,7 +10,7 @@ MDS
 
 ### YAGEL:
 - fix correlation thresholds consistency, there are 3 thresholds: 0.3,0.55,0.7, we need at most 2 so we need to discuss that YOUR GOAL IS TO REDUCE THE NUMBER OF THRESHOLDS FROM 3 TO 2, WITHIN THE MAIN NOTEBOOK WITH AS LOW AS POSSIBLE MODIFICATIONS
-- check updated DAGs
+- update DAG section in article with new pictures
 - 2.4.3 Causal Model
 - check article and write notes about it
 - investigate DAG aftermeth
@@ -20,12 +20,10 @@ MDS
 - combine the code from project-saleh to visualizations
 - Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
 - edit data structure image
-- add PCA final table resolutions to article
-- make feature_processing more efficient
+- add more pictures to the article
 
 ## Secondary quests
 ### YAGEL:
-- update new pictures in the article after the LAST touch
 - check pre and post feature outlier handling
 
 ### RONI:

@@ -141,7 +141,7 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     levels_and_ids = [f'loser.card{i}.id' for i in range(1, 9)] + [f'loser.card{i}.level' for i in range(1, 9)] + \
                         [f'winner.card{i}.id' for i in range(1, 9)] + [f'winner.card{i}.level' for i in range(1, 9)]
     features_to_remove = levels_and_ids + ['winner.clan.tag', 'winner.clan.badgeId', \
-                            'loser.clan.badgeId', 'loser.clan.tag', 'tournamentTag']
+                            'loser.clan.badgeId', 'loser.clan.tag', 'tournamentTag', 'arena.id']
     battles_df.drop(columns=features_to_remove, inplace=True)
 
     return battles_df
@@ -207,19 +207,19 @@ def _post_engineering_outliers_handling(battles_df, deck_total_games):
     return battles_df.drop('Unnamed: 0', axis=1)
 
 
-def _count_winning_cards(row, prefix, winning_card_set):
-    """
-    Counts how many cards in a player's deck belong to the predefined set of 'winning' cards.
+# def _count_winning_cards(row, prefix, winning_card_set):
+#     """
+#     Counts how many cards in a player's deck belong to the predefined set of 'winning' cards.
 
-    Parameters:
-    - row (pd.Series): A single row from the battles dataset, representing one battle.
-    - prefix (str): Either "winner" or "loser", indicating which player's deck is being evaluated.
-    - winning_card_set (set): A set of card IDs that are considered 'winning' cards.
+#     Parameters:
+#     - row (pd.Series): A single row from the battles dataset, representing one battle.
+#     - prefix (str): Either "winner" or "loser", indicating which player's deck is being evaluated.
+#     - winning_card_set (set): A set of card IDs that are considered 'winning' cards.
 
-    Returns:
-    - int: The number of cards in the player's deck that are part of `winning_card_set`.
-    """
-    return sum(row[f"{prefix}.card{i}.id"] in winning_card_set for i in range(1, 9))
+#     Returns:
+#     - int: The number of cards in the player's deck that are part of `winning_card_set`.
+#     """
+#     return sum(row[f"{prefix}.card{i}.id"] in winning_card_set for i in range(1, 9))
 
 
 def _compute_synergy_score(row):
@@ -320,6 +320,17 @@ def _elixir_score(elixir_values, lower_bound, upper_bound):
     return scores
 
 
+def _sum_tower_hp(series):
+    """
+    Computes the sum of princess tower HP values.
+    """
+    mask = series.notna() & series.ne('') & series.ne('[]')
+    parsed_values = np.where(mask, series.map(ast.literal_eval), None)
+    parsed_values = [x if x is not None else [] for x in parsed_values]
+    return np.array([sum(lst) for lst in parsed_values])
+
+
+
 def _feature_engineering(battles_df, winning_card_list_df):
     """
     Performs feature engineering on the battle dataset to extract meaningful attributes.
@@ -350,6 +361,8 @@ def _feature_engineering(battles_df, winning_card_list_df):
     ]
     
     battles_df[numeric_cols] = battles_df[numeric_cols].apply(pd.to_numeric, errors='coerce')
+    battles_df['winner.princessTowersHitPoints'] = _sum_tower_hp(battles_df['winner.princessTowersHitPoints'])
+    battles_df['loser.princessTowersHitPoints'] = _sum_tower_hp(battles_df['loser.princessTowersHitPoints'])
     battles_df['deck_elixir_variability'] = battles_df[['winner.elixir.average', 'loser.elixir.average']].std(axis=1)
     battles_df['winner.trophy_eff'] = battles_df['winner.trophyChange'] / battles_df['winner.startingTrophies']
     battles_df['loser.trophy_eff'] = battles_df['loser.trophyChange'].abs() / battles_df['loser.startingTrophies']
@@ -363,8 +376,6 @@ def _feature_engineering(battles_df, winning_card_list_df):
     rarities = ['common', 'rare', 'epic', 'legendary']
     battles_df['winner.rarity_diversity'] = battles_df[[f'winner.{r}.count' for r in rarities]].gt(0).sum(axis=1)
     battles_df['loser.rarity_diversity'] = battles_df[[f'loser.{r}.count' for r in rarities]].gt(0).sum(axis=1)
-    battles_df['winner.princessTowersHitPoints'] = battles_df['winner.princessTowersHitPoints'].apply(lambda x: sum(ast.literal_eval(x)) if pd.notna(x) and x != '' and x !='[]' else 0)
-    battles_df['loser.princessTowersHitPoints'] = battles_df['loser.princessTowersHitPoints'].apply(lambda x: sum(ast.literal_eval(x)) if pd.notna(x) and x != '' and x !='[]' else 0)
     battles_df['winnre_loser.princess_tower_gap'] = battles_df['winner.princessTowersHitPoints'] - battles_df['loser.princessTowersHitPoints']
     battles_df['winner.has_legendary'] = battles_df['winner.legendary.count'].gt(0).astype(int)
     battles_df['loser.has_legendary'] = battles_df['loser.legendary.count'].gt(0).astype(int)

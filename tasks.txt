@@ -2,19 +2,18 @@
 ### SALEH:
 MDS
 1) ADD AN EXPLAINATION ON THE SUB PLOT OF MDS FEATURES, CONSIDER THE DENSED AREA ON THE RIGHT, CONSIDER HOW FINAL SCORE LEFT REGION ALMOST DOESN'T HAS BLUE POINTS AT ALL, ELABORATE SOME HIRTUTIM
-2) think of another feature to add to the subplot of comparing features through MDS 
+-- use the words left graph and right graph, groups
+2) KDE
 3) think of how to add results from MDS section to impact and recommandation section
-4) read paper (בזריז כזה)
-3) FP-growth algorithm
 
 
 ### YAGEL:
-- fix correlation thresholds consistency, there are 3 thresholds: 0.3,0.55,0.7, we need at most 2 so we need to discuss that YOUR GOAL IS TO REDUCE THE NUMBER OF THRESHOLDS FROM 3 TO 2, WITHIN THE MAIN NOTEBOOK WITH AS LOW AS POSSIBLE MODIFICATIONS
 - update DAG section in article with new pictures
+- tasks 8 and 9 in data file
 - 2.4.3 Causal Model
 - check article and write notes about it
-- investigate DAG aftermeth
-- tasks 8 and 9 in data file
+- investigate DAG aftermeth - FP-growth algorithm
+
 
 ### RONI:
 - combine the code from project-saleh to visualizations
@@ -23,8 +22,6 @@ MDS
 - add more pictures to the article
 
 ## Secondary quests
-### YAGEL:
-- check pre and post feature outlier handling
 
 ### RONI:
 - change pictures to their new picture in the article

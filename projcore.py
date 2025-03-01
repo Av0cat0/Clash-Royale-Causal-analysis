@@ -396,11 +396,19 @@ def _feature_engineering(battles_df, winning_card_list_df):
     )
     battles_df["winner.win_lose_ratio_Z_score"] = (battles_df["winner.win_lose_ratio"] - battles_df["winner.win_lose_ratio"].mean()) / battles_df["winner.win_lose_ratio"].std()
     winning_card_set = set(winning_card_list_df["card_id"])
-    battles_df["winner.winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "winner", winning_card_set), axis=1)
-    battles_df["loser.winning_card_count"] = battles_df.apply(lambda row: _count_winning_cards(row, "loser", winning_card_set), axis=1)
+    winner_cards = battles_df[[f"winner.card{i}.id" for i in range(1, 9)]].to_numpy()
+    loser_cards = battles_df[[f"loser.card{i}.id" for i in range(1, 9)]].to_numpy()
+    winning_card_array = np.array(list(winning_card_set))
+    battles_df["winner.winning_card_count"] = np.isin(winner_cards, winning_card_array).sum(axis=1)
+    battles_df["loser.winning_card_count"] = np.isin(loser_cards, winning_card_array).sum(axis=1)
     # Create ordered list features for winner and loser cards
-    battles_df["winner.card_set"] = battles_df.apply(lambda row: tuple(sorted([row[f"winner.card{i}.id"] for i in range(1, 9)])), axis=1)
-    battles_df["loser.card_set"] = battles_df.apply(lambda row: tuple(sorted([row[f"loser.card{i}.id"] for i in range(1, 9)])), axis=1)
+    # CAREFULLY - UPDATED RECENTLY SO MUST VALIDATE
+    winner_cards = battles_df[[f"winner.card{i}.id" for i in range(1, 9)]].to_numpy()
+    loser_cards = battles_df[[f"loser.card{i}.id" for i in range(1, 9)]].to_numpy()
+    winner_sorted = np.sort(winner_cards, axis=1)
+    loser_sorted = np.sort(loser_cards, axis=1)
+    battles_df["winner.card_set"] = list(map(tuple, winner_sorted))
+    battles_df["loser.card_set"] = list(map(tuple, loser_sorted))
     # integrate the winner deck card levels into a few informative score features
     battles_df['winner.avg_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].mean(axis=1)
     battles_df['winner.max_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].max(axis=1)

@@ -85,9 +85,9 @@ def feature_preprocessing(battles_df, winning_card_list_df):
     battles_df[features_to_normalize] = battles_df[features_to_normalize] + 1
 
     # One-hot encode categorical variables
-    features_to_onehot = ['arena.id', 'gameMode.id']
-    for feature in features_to_onehot:
-        battles_df[feature] = pd.get_dummies(battles_df[feature]).idxmax(axis=1).astype('category').cat.codes
+    # features_to_onehot = ['arena.id', 'gameMode.id']
+    # for feature in features_to_onehot:
+    #     battles_df[feature] = pd.get_dummies(battles_df[feature]).idxmax(axis=1).astype('category').cat.codes
 
     #Imputation
     for feature in battles_df.columns:

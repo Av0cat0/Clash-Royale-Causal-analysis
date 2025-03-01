@@ -1,16 +1,19 @@
 ## Main quests
 ### SALEH:
-- 2.4.2 Deck Similarity - MDS
-- (put aside) Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
-1) think of how to add results from MDS section to impact and recommandation section
-2 - in parralel to 1) read paper (בזריז כזה)
+MDS
+1) ADD AN EXPLAINATION ON THE SUB PLOT OF MDS FEATURES, CONSIDER THE DENSED AREA ON THE RIGHT, CONSIDER HOW FINAL SCORE LEFT REGION ALMOST DOESN'T HAS BLUE POINTS AT ALL, ELABORATE SOME HIRTUTIM
+2) think of another feature to add to the subplot of comparing features through MDS 
+3) think of how to add results from MDS section to impact and recommandation section
+4) read paper (בזריז כזה)
 3) FP-growth algorithm
 
 
 ### YAGEL:
-- investigate DAG aftermeth
 - fix correlation thresholds consistency, there are 3 thresholds: 0.3,0.55,0.7, we need at most 2 so we need to discuss that YOUR GOAL IS TO REDUCE THE NUMBER OF THRESHOLDS FROM 3 TO 2, WITHIN THE MAIN NOTEBOOK WITH AS LOW AS POSSIBLE MODIFICATIONS
+- check updated DAGs
 - 2.4.3 Causal Model
+- check article and write notes about it
+- investigate DAG aftermeth
 - tasks 8 and 9 in data file
 
 ### RONI:
@@ -31,3 +34,4 @@
 
 # upcoming: **Please don't take a task from this task bucket, other tasks are important as well**
 pressent the project with canvas
+everyone should develop the impact and recommandation section

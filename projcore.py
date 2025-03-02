@@ -146,6 +146,52 @@ def feature_preprocessing(battles_df, winning_card_list_df):
 
     return battles_df
 
+def sanity_check(df):
+    # check winner.tag not equal to loser.tag
+    assert (df['winner.tag'] != df['loser.tag']).all()
+
+    # check every column-name with suffix of 'startingThropies' is from 0-9000
+    startingThropies_cols = [col for col in df.columns if 'startingThropies' in col]
+    assert (df[startingThropies_cols] >= 0).all().all()
+    assert (df[startingThropies_cols] <= 9000).all().all()
+
+    # check the column winner.trophyChange is from 26-32 and in the same row the loser.trophyChange is -winner.trophyChange
+    assert (df['winner.trophyChange'] >= 1).all()
+    assert (df['winner.trophyChange'] <= 60).all()
+
+
+    # check every column-name with suffix of 'crowns' is from 0-3
+    crowns_cols = [col for col in df.columns if 'crowns' in col]
+    assert (df[crowns_cols] >= 0).all().all()
+    assert (df[crowns_cols] <= 3).all().all()
+
+    # check every column-name with suffix of 'HitPoints' is possitive
+    HitPoints_cols = [col for col in df.columns if 'HitPoints' in col]
+    assert (df[HitPoints_cols] >= -1).all().all()
+
+    # check any column-name with suffix of 'count' is from 0-8
+    count_cols = [col for col in df.columns if 'count' in col and col not in ['winner.winning_count', 'winner.losing_count']]
+    assert (df[count_cols] >= 0).all().all()
+    assert (df[count_cols] <= 9).all().all()
+
+    # check any column-name contain 'elixir' is between 0 to 9
+    elixir_cols = [col for col in df.columns if 'elixir' in col and col not in ['winner_loser.elixir_gap']]
+    assert (df[elixir_cols] >= 0).all().all()
+    assert (df[elixir_cols] <= 9).all().all()
+
+    # check column-name 'winner.winning_count' > 0
+    assert (df['winner.winning_count'] > 0).all()
+    assert (df['winner.losing_count'] >= 0).all()
+    assert (df['winner.winning_count'] + df['winner.losing_count'] <= df['winner.total_games_for']).all()
+
+    # check column-name 'winner.win_lose_ratio' is between 0 to 1
+    assert (df['winner.win_lose_ratio'] >= 0).all()
+    assert (df['winner.win_lose_ratio'] <= 1).all()
+
+    # check column-name 'winner.avarage_card_level' is lower then max_card_level and higher then min_card_level
+    assert (df['winner.avg_card_level'] > 0).all()
+    assert (df['winner.avg_card_level'] >= df['winner.min_card_level']).all()
+    assert (df['winner.avg_card_level'] <= df['winner.max_card_level']).all()
 
 
 def _compute_deck_strength(battles_df, card_win_rates):
@@ -421,6 +467,9 @@ def _feature_engineering(battles_df, winning_card_list_df):
     battles_df["winner.card_set"] = list(map(tuple, winner_sorted))
     battles_df["loser.card_set"] = list(map(tuple, loser_sorted))
     # integrate the winner deck card levels into a few informative score features
+    # go through all winner.card{i}.level columns and print the avarage, max, min, variance
+    
+
     battles_df['winner.avg_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].mean(axis=1)
     battles_df['winner.max_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].max(axis=1)
     battles_df['winner.min_card_level'] = battles_df[[f'winner.card{i}.level' for i in range(1, 9)]].min(axis=1)
@@ -468,7 +517,7 @@ def _feature_engineering(battles_df, winning_card_list_df):
     ]
     scaler = MinMaxScaler()
     battles_df["winner.synergy_score"] = battles_df.apply(_compute_synergy_score, axis=1)
-    battles_df[scoring_features] = scaler.fit_transform(battles_df[scoring_features])
+    # battles_df[scoring_features] = scaler.fit_transform(battles_df[scoring_features])
     battles_df["winner.deck_final_score"] = (
         0.25 * battles_df["winner.win_rate"] +
         0.25 * battles_df["winner.elixir_score"] +

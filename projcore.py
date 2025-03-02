@@ -550,26 +550,43 @@ def decks_to_sparse_matrix(deck_col, card_to_index, unique_cards_len):
     return sparse_matrix
 
 
-def create_directed_graph(correlation_matrix, threshold):
+def create_directed_graph(correlation_matrix, correlation_threshold):
     """
-    Creates a directed graph (DiGraph) from a correlation matrix based on a given threshold.
-    
+    Constructs a directed graph (DiGraph) from a correlation matrix using a threshold.
+
     Parameters:
-    - correlation_matrix (pd.DataFrame): A square matrix containing correlation coefficients between features.
-    - threshold (float): The minimum absolute correlation value required to create an edge.
+    - correlation_matrix (pd.DataFrame): Square matrix of feature correlations.
+    - correlation_threshold (float): Minimum absolute correlation required to create an edge.
 
     Returns:
-    - nx.DiGraph: A directed graph where nodes represent features and edges represent strong correlations.
+    - nx.DiGraph: Directed graph of feature dependencies based on domain knowledge.
     """
-    G = nx.DiGraph()
+    
+    G = nx.DiGraph() 
+    priority = [
+        'winner.crowns_dominance', 'loser.crowns', 'winner.crowns', 
+        'winner.kingTowerHitPoints', 'loser.kingTowerHitPoints', 
+        'winnre_loser.princess_tower_gap', 'winner.princessTowersHitPoints', 
+        'loser.princessTowersHitPoints', 'winner.win_lose_ratio_Z_score', 
+        'winner.win_lose_ratio', 'winner.deck_final_score', 'winner.high_win_rate', 
+        'winner.win_rate', 'loser.elixir_score', 'winner.elixir_score'
+    ]
     for i in range(len(correlation_matrix.columns)):
-        for j in range(i+1, len(correlation_matrix.columns)):
-            if abs(correlation_matrix.iloc[i, j]) >= threshold:
-                if correlation_matrix.iloc[i, j] > 0:
-                    G.add_edge(correlation_matrix.columns[i], correlation_matrix.columns[j])
+        for j in range(i + 1, len(correlation_matrix.columns)):
+            if abs(correlation_matrix.iloc[i, j]) >= correlation_threshold:
+                feature_i = correlation_matrix.columns[i]
+                feature_j = correlation_matrix.columns[j]
+                if feature_i in priority and feature_j in priority:
+                    if priority.index(feature_i) < priority.index(feature_j):
+                        G.add_edge(feature_j, feature_i)
+                    else:
+                        G.add_edge(feature_i, feature_j)
+                elif correlation_matrix.iloc[i, j] > 0:
+                    G.add_edge(feature_i, feature_j)
                 else:
-                    G.add_edge(correlation_matrix.columns[j], correlation_matrix.columns[i])
-    return G
+                    G.add_edge(feature_j, feature_i)
+    return G 
+
 
 
 # def get_t_sne(battles_df, dest_col, preplexity = 30, learning_rate=200, n_iter=1000):

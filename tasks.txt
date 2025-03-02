@@ -9,12 +9,10 @@ MDS
 
 
 ### YAGEL:
-- add directions of edges to CONNECTED COMPONENTS ONLY, add paragraph about the creation of edge (edge from correlation, direction from domain knowledge)
 - update explaination of 3 last new features in main notebook
 - investigate DAG aftermeth - FP-growth algorithm
 - check article and write notes about it
-- update DAG section in article with new pictures
-- add (without assertions) sanity check function to projcore
+- (?)add (without assertions) sanity check function to projcore
 
 
 

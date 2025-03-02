@@ -5,26 +5,28 @@ MDS
 -- use the words left graph and right graph, groups
 2) KDE
 3) think of how to add results from MDS section to impact and recommandation section
+4) compare simple t-sne vs MDS (choose win rate as feature) and say that t-sne is more densed, which is harder to inference as the geometrics differences are smaller
 
 
 ### YAGEL:
 - update DAG section in article with new pictures
+- add directions of edges to DAG, add paragraph about the creation of edge (edge from correlation, direction from domain knowledge)
+- add subplot of 3 thresholds of full DAGs, add paragraph explaining those results 
 - tasks 8 and 9 in data file
-- 2.4.3 Causal Model
 - check article and write notes about it
 - investigate DAG aftermeth - FP-growth algorithm
+- update explaination of 3 last new features in main notebook
 
 
 ### RONI:
-- combine the code from project-saleh to visualizations
 - Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
-- edit data structure image
-- add more pictures to the article
-
-## Secondary quests
-
-### RONI:
+- edit data structure images
 - change pictures to their new picture in the article
+- readme
+- fix old values in the article
+- add research question
+- add abstraction of code explaination, how we can adapt to other tables and the changes it will bring
+
 
 
 # upcoming: **Please don't take a task from this task bucket, other tasks are important as well**

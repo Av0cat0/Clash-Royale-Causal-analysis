@@ -2,27 +2,19 @@
 ### SALEH:
 MDS
 1) ADD AN EXPLAINATION ON THE SUB PLOT OF MDS FEATURES, CONSIDER THE DENSED AREA ON THE RIGHT, CONSIDER HOW FINAL SCORE LEFT REGION ALMOST DOESN'T HAS BLUE POINTS AT ALL, ELABORATE SOME HIRTUTIM
--- use the words left graph and right graph, groups
-2) KDE
+2) finish MDS chapter
 3) think of how to add results from MDS section to impact and recommandation section
-4) compare simple t-sne vs MDS (choose win rate as feature) and say that t-sne is more densed, which is harder to inference as the geometrics differences are smaller
 
 
 ### YAGEL:
-- change pictures to their new picture in the article
 - investigate DAG aftermeth - FP-growth algorithm
 - (?)add (without assertions) sanity check function to projcore
 
 
-
 ### RONI:
 - check Saleh's paragraphs
-- link to git
 - edit data structure images
-- readme
 - fix old values in the article
-- add research question
-- add abstraction of code explaination, how we can adapt to other tables and the changes it will bring
 
 
 

@@ -9,6 +9,7 @@ MDS
 
 
 ### YAGEL:
+- deck_final_score -> win_rate, elaborate about it on insight1, use terms like white-box and black-box
 - update explaination of 3 last new features in main notebook
 - investigate DAG aftermeth - FP-growth algorithm
 - check article and write notes about it

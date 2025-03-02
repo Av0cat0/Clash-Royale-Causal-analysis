@@ -568,8 +568,8 @@ def create_directed_graph(correlation_matrix, correlation_threshold):
         'winner.kingTowerHitPoints', 'loser.kingTowerHitPoints', 
         'winnre_loser.princess_tower_gap', 'winner.princessTowersHitPoints', 
         'loser.princessTowersHitPoints', 'winner.win_lose_ratio_Z_score', 
-        'winner.win_lose_ratio', 'winner.deck_final_score', 'winner.high_win_rate', 
-        'winner.win_rate', 'loser.elixir_score', 'winner.elixir_score'
+        'winner.win_lose_ratio', 'winner.high_win_rate', 'winner.win_rate',
+        'winner.deck_final_score', 'loser.elixir_score', 'winner.elixir_score'
     ]
     for i in range(len(correlation_matrix.columns)):
         for j in range(i + 1, len(correlation_matrix.columns)):

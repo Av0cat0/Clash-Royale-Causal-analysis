@@ -10,7 +10,6 @@ MDS
 
 ### YAGEL:
 - add directions of edges to CONNECTED COMPONENTS ONLY, add paragraph about the creation of edge (edge from correlation, direction from domain knowledge)
-- add subplot of 3 thresholds of full DAGs, add paragraph explaining those results 
 - update explaination of 3 last new features in main notebook
 - investigate DAG aftermeth - FP-growth algorithm
 - check article and write notes about it

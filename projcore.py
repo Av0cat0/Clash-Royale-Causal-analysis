@@ -8,6 +8,7 @@ from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
 import ast
 from sklearn.manifold import TSNE
+import networkx as nx
 
 PCA_VARIENCE_THRESHOLD = 0.95
 ROUNDING_PRECISION = 7
@@ -548,6 +549,27 @@ def decks_to_sparse_matrix(deck_col, card_to_index, unique_cards_len):
             sparse_matrix[i, card_to_index[card]] = 1
     return sparse_matrix
 
+
+def create_directed_graph(correlation_matrix, threshold):
+    """
+    Creates a directed graph (DiGraph) from a correlation matrix based on a given threshold.
+    
+    Parameters:
+    - correlation_matrix (pd.DataFrame): A square matrix containing correlation coefficients between features.
+    - threshold (float): The minimum absolute correlation value required to create an edge.
+
+    Returns:
+    - nx.DiGraph: A directed graph where nodes represent features and edges represent strong correlations.
+    """
+    G = nx.DiGraph()
+    for i in range(len(correlation_matrix.columns)):
+        for j in range(i+1, len(correlation_matrix.columns)):
+            if abs(correlation_matrix.iloc[i, j]) >= threshold:
+                if correlation_matrix.iloc[i, j] > 0:
+                    G.add_edge(correlation_matrix.columns[i], correlation_matrix.columns[j])
+                else:
+                    G.add_edge(correlation_matrix.columns[j], correlation_matrix.columns[i])
+    return G
 
 
 # def get_t_sne(battles_df, dest_col, preplexity = 30, learning_rate=200, n_iter=1000):

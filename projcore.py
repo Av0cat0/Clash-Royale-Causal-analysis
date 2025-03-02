@@ -8,6 +8,7 @@ from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
 import ast
 from sklearn.manifold import TSNE
+import networkx as nx
 
 PCA_VARIENCE_THRESHOLD = 0.95
 ROUNDING_PRECISION = 7
@@ -547,6 +548,44 @@ def decks_to_sparse_matrix(deck_col, card_to_index, unique_cards_len):
         for card in deck:
             sparse_matrix[i, card_to_index[card]] = 1
     return sparse_matrix
+
+
+def create_directed_graph(correlation_matrix, correlation_threshold):
+    """
+    Constructs a directed graph (DiGraph) from a correlation matrix using a threshold.
+
+    Parameters:
+    - correlation_matrix (pd.DataFrame): Square matrix of feature correlations.
+    - correlation_threshold (float): Minimum absolute correlation required to create an edge.
+
+    Returns:
+    - nx.DiGraph: Directed graph of feature dependencies based on domain knowledge.
+    """
+    
+    G = nx.DiGraph() 
+    priority = [
+        'winner.crowns_dominance', 'loser.crowns', 'winner.crowns', 
+        'winner.kingTowerHitPoints', 'loser.kingTowerHitPoints', 
+        'winnre_loser.princess_tower_gap', 'winner.princessTowersHitPoints', 
+        'loser.princessTowersHitPoints', 'winner.win_lose_ratio_Z_score', 
+        'winner.win_lose_ratio', 'winner.high_win_rate', 'winner.win_rate',
+        'winner.deck_final_score', 'loser.elixir_score', 'winner.elixir_score'
+    ]
+    for i in range(len(correlation_matrix.columns)):
+        for j in range(i + 1, len(correlation_matrix.columns)):
+            if abs(correlation_matrix.iloc[i, j]) >= correlation_threshold:
+                feature_i = correlation_matrix.columns[i]
+                feature_j = correlation_matrix.columns[j]
+                if feature_i in priority and feature_j in priority:
+                    if priority.index(feature_i) < priority.index(feature_j):
+                        G.add_edge(feature_j, feature_i)
+                    else:
+                        G.add_edge(feature_i, feature_j)
+                elif correlation_matrix.iloc[i, j] > 0:
+                    G.add_edge(feature_i, feature_j)
+                else:
+                    G.add_edge(feature_j, feature_i)
+    return G 
 
 
 

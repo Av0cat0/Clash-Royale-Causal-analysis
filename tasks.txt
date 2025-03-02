@@ -9,13 +9,12 @@ MDS
 
 
 ### YAGEL:
-- update DAG section in article with new pictures
-- add directions of edges to DAG, add paragraph about the creation of edge (edge from correlation, direction from domain knowledge)
-- add subplot of 3 thresholds of full DAGs, add paragraph explaining those results 
-- tasks 8 and 9 in data file
-- check article and write notes about it
+- deck_final_score -> win_rate, elaborate about it on insight1, use terms like white-box and black-box
+- impact and recommendations: add whatever you think but add **insight1**, saying הצלחנו לבנות נוסחה שמתחקה כ62% אחר המדד של וין-רייט
 - investigate DAG aftermeth - FP-growth algorithm
-- update explaination of 3 last new features in main notebook
+- check article and write notes about it
+- (?)add (without assertions) sanity check function to projcore
+
 
 
 ### RONI:

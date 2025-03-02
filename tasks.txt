@@ -9,13 +9,14 @@ MDS
 
 
 ### YAGEL:
-- update DAG section in article with new pictures
-- add directions of edges to DAG, add paragraph about the creation of edge (edge from correlation, direction from domain knowledge)
+- add directions of edges to CONNECTED COMPONENTS ONLY, add paragraph about the creation of edge (edge from correlation, direction from domain knowledge)
 - add subplot of 3 thresholds of full DAGs, add paragraph explaining those results 
-- tasks 8 and 9 in data file
-- check article and write notes about it
-- investigate DAG aftermeth - FP-growth algorithm
 - update explaination of 3 last new features in main notebook
+- investigate DAG aftermeth - FP-growth algorithm
+- check article and write notes about it
+- update DAG section in article with new pictures
+- add (without assertions) sanity check function to projcore
+
 
 
 ### RONI:

@@ -1,6 +1,4 @@
-## Main quests
 ### SALEH:
-MDS
 1) ADD AN EXPLAINATION ON THE SUB PLOT OF MDS FEATURES, CONSIDER THE DENSED AREA ON THE RIGHT, CONSIDER HOW FINAL SCORE LEFT REGION ALMOST DOESN'T HAS BLUE POINTS AT ALL, ELABORATE SOME HIRTUTIM
 2) finish MDS chapter
 3) think of how to add results from MDS section to impact and recommandation section
@@ -13,11 +11,4 @@ MDS
 
 ### RONI:
 - check Saleh's paragraphs
-- edit data structure images
-- fix old values in the article
-
-
-
-# upcoming: **Please don't take a task from this task bucket, other tasks are important as well**
-pressent the project with canvas
-everyone should develop the impact and recommandation section
+- start canvas

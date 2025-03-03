@@ -130,7 +130,7 @@ def feature_preprocessing(battles_df, winning_card_list_df):
 
     #Imputation
     for feature in battles_df.columns:
-        if feature in ['winner.clan.badgeId','loser.clan.badgeId', 'winner.clan.tag', 'loser.clan.tag', 'loser.kingTowerHitPoints']:
+        if feature in ['loser.kingTowerHitPoints']:
            _handle_missing_values(battles_df, feature, strategy='fill')
         elif 'princessTowersHitPoints' in feature:
             _handle_missing_values(battles_df, feature, strategy='fill', value="[0]")
@@ -242,7 +242,7 @@ def _compute_synergy_score(row):
     return rarity_diversity * row["winner.spell_troop_ratio"]
     
 
-def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=-1):
+def _handle_missing_values(df, column, strategy='auto', n_neighbors=5, value=0):
     """
     Handles missing values in a DataFrame based on different strategies.
 

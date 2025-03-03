@@ -148,3 +148,58 @@ plt.figure(figsize=(12, 8))
 nx.draw(G, pos, with_labels=True, node_size=3000, node_color="lightblue", font_size=10, font_weight="bold", edge_color="gray")
 plt.title("Graph Based on Frequent Itemsets (|support| >= 0.4)")
 plt.show()
+
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from mlxtend.frequent_patterns import fpgrowth, association_rules
+
+# טוען את הנתונים
+org_battles_df = pd.read_csv('BattlesStaging_01012021_WL_tagged.csv')
+battles_df_for_dag = pc.feature_preprocessing(org_battles_df, winning_card_list_df)
+
+# המרת הנתונים לפורמט בינארי: 1 אם הפיצ'ר קיים בעסקה, 0 אם לא
+# לדוגמה: אם תכונה A קיימת בעסקה, תשמור 1 אחרת 0
+# הכוונה כאן היא להמיר כל עמודת פיצ'ר למערך בינארי
+battles_df_binary = battles_df_for_dag.applymap(lambda x: 1 if x > 0 else 0)
+
+# הפעלת FP-Growth על הנתונים עם סף תדירות מינימלית של 0.4
+# min_support = 0.4 אומר שאנחנו מחפשים דפוסים שהם לפחות ב-40% מהעסקאות
+frequent_itemsets = fpgrowth(battles_df_binary, min_support=0.4, use_colnames=True)
+
+# מציאת חוקים אסוציאטיביים מתוך הדפוסים התכופים
+# אנחנו יכולים להגדיר סף אמינות (confidence) לדוגמה 0.7
+association_rules_df = association_rules(frequent_itemsets, metric="confidence", min_threshold=0.7)
+
+# הצגת החוקים
+print("Association Rules:")
+print(association_rules_df)
+
+# הצגת הדפוסים התכופים (itemsets)
+print("\nFrequent Itemsets:")
+print(frequent_itemsets)
+
+# אפשר גם ליצור גרף המתאר את הקשרים בין הפיצ'רים (כמו גרף ה-DAG שנעשה קודם)
+import networkx as nx
+
+# יצירת גרף undirected חדש
+G = nx.Graph()
+
+# יצירת קשרים (edges) לפי הדפוסים התכופים
+for _, row in frequent_itemsets.iterrows():
+    items = row['itemsets']
+    if len(items) == 2:  # מקשרים רק זוגות של פריטים
+        G.add_edge(list(items)[0], list(items)[1])
+
+# שימוש ב-spring layout ליצירת גרף עם רווחים טובים בין הקודקודים
+pos = nx.spring_layout(G, k=0.2)
+
+# ציור הגרף
+plt.figure(figsize=(12, 8))
+nx.draw(G, pos, with_labels=True, node_size=3000, node_color="lightblue", font_size=10, font_weight="bold", edge_color="gray")
+plt.title("Graph Based on Frequent Itemsets (|support| >= 0.4) using FP-Growth")
+plt.show()
+

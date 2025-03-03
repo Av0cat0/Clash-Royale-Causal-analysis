@@ -2,29 +2,19 @@
 ### SALEH:
 MDS
 1) ADD AN EXPLAINATION ON THE SUB PLOT OF MDS FEATURES, CONSIDER THE DENSED AREA ON THE RIGHT, CONSIDER HOW FINAL SCORE LEFT REGION ALMOST DOESN'T HAS BLUE POINTS AT ALL, ELABORATE SOME HIRTUTIM
--- use the words left graph and right graph, groups
-2) KDE
+2) finish MDS chapter
 3) think of how to add results from MDS section to impact and recommandation section
-4) compare simple t-sne vs MDS (choose win rate as feature) and say that t-sne is more densed, which is harder to inference as the geometrics differences are smaller
 
 
 ### YAGEL:
-- deck_final_score -> win_rate, elaborate about it on insight1, use terms like white-box and black-box
-- impact and recommendations: add whatever you think but add **insight1**, saying הצלחנו לבנות נוסחה שמתחקה כ62% אחר המדד של וין-רייט
 - investigate DAG aftermeth - FP-growth algorithm
-- check article and write notes about it
 - (?)add (without assertions) sanity check function to projcore
 
 
-
 ### RONI:
-- Find a way to create boundaries for decks with high win-rate, so the sub data within the boundaries will show the highest win rates (3 boundaries are good)
+- check Saleh's paragraphs
 - edit data structure images
-- change pictures to their new picture in the article
-- readme
 - fix old values in the article
-- add research question
-- add abstraction of code explaination, how we can adapt to other tables and the changes it will bring
 
 
 

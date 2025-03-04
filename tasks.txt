@@ -1,7 +1,7 @@
 ### SALEH:
-1) ADD AN EXPLAINATION ON THE SUB PLOT OF MDS FEATURES, CONSIDER THE DENSED AREA ON THE RIGHT, CONSIDER HOW FINAL SCORE LEFT REGION ALMOST DOESN'T HAS BLUE POINTS AT ALL, ELABORATE SOME HIRTUTIM
-2) finish MDS chapter
-3) think of how to add results from MDS section to impact and recommandation section
+- finish MDS chapter
+- ADD AN EXPLAINATION ON THE SUB PLOT OF MDS FEATURES, CONSIDER THE DENSED AREA ON THE RIGHT, CONSIDER HOW FINAL SCORE LEFT REGION ALMOST DOESN'T HAS BLUE POINTS AT ALL, ELABORATE SOME HIRTUTIM
+- think of how to add results from MDS section to impact and recommandation section
 
 
 ### YAGEL:
@@ -13,6 +13,5 @@ p2: fp-growth algorithm vs corr matrix: dag based on corr is much more informati
 
 
 ### RONI:
-- add the sampled df to the head of the notebook
 - check Saleh's paragraphs
 - start canvas

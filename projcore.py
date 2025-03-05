@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import ast
 from sklearn.manifold import TSNE
 import networkx as nx
+from efficient_apriori import apriori
+from mlxtend.frequent_patterns import fpgrowth, association_rules
 
 PCA_VARIENCE_THRESHOLD = 0.95
 ROUNDING_PRECISION = 7
@@ -502,6 +504,101 @@ def get_numerical_dataset(battles_df):
     df_numeric = battles_df[numerical_columns].copy()
     df_numeric = df_numeric.drop(columns=id_features_to_remove)
     return df_numeric
+
+def dataframe_to_transactions(df):
+    transactions = []
+    for _, row in df.iterrows():
+        transaction = tuple(f"{col}:{row[col]}" for col in df.columns)
+        transactions.append(transaction)
+    return transactions
+
+           
+def turns_features_to_bin(df, columns_thresholds, binary_columns):
+    """
+    Converts specified features into binary values (0 or 1) based on a threshold.
+    
+    Parameters:
+    - df (pd.DataFrame): Input DataFrame containing the relevant columns.
+    - columns_thresholds (dict): Dictionary containing column names as keys and threshold values as values.
+    - binary_columns (list): List of binary columns to be included in the final DataFrame.
+    
+    Returns:
+    - pd.DataFrame: DataFrame with binarized features.
+    """
+    bin_df = pd.DataFrame()
+    for col, threshold in columns_thresholds.items():
+        bin_df[col] = (df[col] >= threshold).astype(int)
+        loser_col = col.replace('winner.', 'loser.')
+        if loser_col in df.columns:
+            bin_df[loser_col] = (df[loser_col] >= threshold).astype(int)
+    new_df = pd.concat([df[binary_columns], bin_df], axis=1)
+    return new_df
+
+def run_apriori(binary_df, min_support, min_confidence):
+    """
+    Runs the Apriori algorithm on the binary DataFrame and visualizes the directed graph.
+    
+    Parameters:
+    - binary_df (pd.DataFrame): Binary DataFrame containing the encoded features.
+    - min_support (float): Minimum support threshold for frequent itemsets.
+    - min_confidence (float): Minimum confidence threshold for association rules.
+    
+    Returns:
+        - None: Displays a directed graph based on the frequent itemsets.
+    """
+    transactions = [tuple(binary_df.columns[binary_df.iloc[i] == 1]) for i in range(len(binary_df))]
+    frequent_itemsets, rules = apriori(transactions, min_support=min_support, min_confidence=min_confidence)
+    if not rules:
+        print("No association rules found. Try lowering min_support or min_confidence.")
+    else:
+        G = nx.DiGraph()
+        for rule in rules:
+            antecedents = rule.lhs  # Left-hand side of rule (antecedents)
+            consequents = rule.rhs  # Right-hand side of rule (consequents)
+            for antecedent in antecedents:
+                for consequent in consequents:
+                    G.add_edge(antecedent, consequent, weight=rule.confidence)
+        pos = nx.spring_layout(G, k=3)
+        plt.figure(figsize=(12, 8))
+        nx.draw(G, pos, with_labels=True, node_size=3000, node_color="lightblue",
+                font_size=10, font_weight="bold", edge_color="gray")
+        plt.title("Directed Graph Based on Frequent Itemsets using Apriori")
+        plt.show()
+
+
+def run_fp_growth(binary_df, min_support, min_confidence):
+    """
+    Runs the FP-Growth algorithm on the binary DataFrame and visualizes the directed graph.
+    
+    Parameters:
+    - binary_df (pd.DataFrame): Binary DataFrame containing the encoded features.
+    - min_support (float): Minimum support threshold for frequent itemsets.
+    - min_confidence (float): Minimum confidence threshold for association rules.
+
+    Returns:
+    - None: Displays a directed graph based on the frequent
+    """
+    frequent_itemsets_fpgrowth = fpgrowth(binary_df, min_support=min_support, use_colnames=True)
+    rules = association_rules(frequent_itemsets_fpgrowth, metric="confidence", min_threshold=min_confidence)
+    G = nx.DiGraph()
+
+    for _, row in rules.iterrows():
+        antecedents = row["antecedents"]
+        consequents = row["consequents"]
+        confidence = row["confidence"]
+        for antecedent in antecedents:
+            for consequent in consequents:
+                G.add_edge(antecedent, consequent, weight=confidence)
+
+    if G.number_of_edges() == 0:
+        print("No edges in the graph. Try lowering min_support or min_confidence.")
+    else:
+        pos = nx.spring_layout(G, k=3)
+        plt.figure(figsize=(12, 8))
+        nx.draw(G, pos, with_labels=True, node_size=3000, node_color="lightblue",
+                font_size=10, font_weight="bold", edge_color="gray")
+        plt.title("Directed Graph Based on Frequent Itemsets using FP-Growth")
+        plt.show()
 
 
 def get_pca_optimal_components(battles_df):

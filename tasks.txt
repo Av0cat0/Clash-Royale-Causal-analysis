@@ -6,10 +6,8 @@
 
 
 ### YAGEL:
-- in dag chapter, after the title and before the metedology, add introduction and 2 paragraphs, no long no short
-introduction: explain the methods you used
-p1: apriori vs fp-growth algorithm: say how we modified the data and show the results are the same but fp-growth is much faster (add times) AS LEARNED IN CLASS
-p2: fp-growth algorithm vs corr matrix: dag based on corr is much more informative, add 1 of the existing corr-based DAG figures to this paragraph
+- Validate the apriori and fp-growth algo in main notebook, so the output is as expected
+- Validate that fp-growth is really faster than apriori and add time differences to article (bonus: as a table)
 - (?)add (without assertions) sanity check function to projcore
 
 

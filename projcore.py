@@ -505,7 +505,17 @@ def get_numerical_dataset(battles_df):
     df_numeric = df_numeric.drop(columns=id_features_to_remove)
     return df_numeric
 
+
 def dataframe_to_transactions(df):
+    """
+    Converts a DataFrame into a list of transactions for association rule mining.
+
+    Parameters:
+    - df (pd.DataFrame): Input DataFrame containing the relevant columns.
+    
+    Returns:
+    - list: A list of transactions, where each transaction is a tuple of column-value pairs.
+    """
     transactions = []
     for _, row in df.iterrows():
         transaction = tuple(f"{col}:{row[col]}" for col in df.columns)

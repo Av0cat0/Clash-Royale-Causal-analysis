@@ -1,6 +1,5 @@
 ### SALEH:
 - write a markdown section about 2 conclusions of -0.03 line expirement
--- prepare text for the same conclusion but for overleaf, which should be elaborated more
 - ADD AN EXPLAINATION ON THE SUB PLOT OF MDS FEATURES, CONSIDER THE DENSED AREA ON THE RIGHT, CONSIDER HOW FINAL SCORE LEFT REGION ALMOST DOESN'T HAS BLUE POINTS AT ALL, ELABORATE SOME HIRTUTIM
 - think of how to add results from MDS section to impact and recommandation section
 
@@ -13,5 +12,6 @@
 
 ### RONI:
 - add Saleh's table to overleaf
+--- prepare text for the same conclusion but for overleaf, which should be elaborated more
 - check Saleh's paragraphs
 - start canvas

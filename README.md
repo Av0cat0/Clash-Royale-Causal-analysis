@@ -19,5 +19,4 @@ We will use the following database to map and vectorize our tables:
 https://www.kaggle.com/datasets/abhinavshaw09/clash-royal-dataset
 
 
-## Mythodolegy:
 
